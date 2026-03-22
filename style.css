@@ -1,0 +1,295 @@
+/* RESET */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* BODY */
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #0f172a;
+  color: white;
+  text-align: center;
+  padding: 40px;
+  overflow-x: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+/* 🎬 BACKGROUND VIDEO */
+#bg-video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+}
+
+/* 🌑 DARK OVERLAY (LESS DARK) */
+body::before {
+  content: "";
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.45); /* 🔥 reduce darkness */
+  z-index: -1;
+}
+
+/* CONTENT FRONT */
+body > *:not(#bg-video) {
+  position: relative;
+  z-index: 2;
+}
+
+button {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+
+/* TITLE */
+h1 {
+  margin-bottom: 25px;
+  font-size: 32px;
+  letter-spacing: 1px;
+}
+
+/* SEARCH BOX */
+.search-box {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  /* 🔥 better glass */
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  padding: 15px;
+  border-radius: 15px;
+}
+
+/* INPUT */
+input {
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+  width: 200px;
+  background: rgba(255,255,255,0.2);
+  color: white;
+  transition: 0.3s;
+}
+
+input:focus {
+  background: rgba(255,255,255,0.3);
+}
+
+input::placeholder {
+  color: #ddd;
+}
+
+/* 🔥 AUTOCOMPLETE FIX */
+.pac-container {
+  z-index: 9999 !important;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* BUTTON */
+button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+  font-weight: bold;
+}
+
+button:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+/* BUTTON GROUP */
+.top-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 15px;
+}
+
+/* RESULT GRID */
+#result {
+  margin-top: 25px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+
+  /* 🔥 ADD BACKGROUND FOR CLEAR VIEW */
+  background: rgba(0,0,0,0.4);
+  padding: 20px;
+  border-radius: 15px;
+}
+
+/* CARD (🔥 MAIN FIX) */
+.card {
+  text-align: left;
+  padding: 15px;
+  border-radius: 15px;
+
+  /* 🔥 FIXED VISIBILITY */
+  background: rgba(0, 0, 0, 0.6); /* darker instead of white glass */
+  backdrop-filter: blur(8px);
+
+  box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+  transition: 0.3s;
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+}
+
+/* IMAGE */
+.card img {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+/* TEXT */
+.card h2 {
+  margin: 10px 0;
+  font-size: 20px;
+  color: #38bdf8; /* 🔥 highlight */
+}
+
+.card p {
+  font-size: 14px;
+  margin: 5px 0;
+  color: #e2e8f0;
+}
+
+/* CARD BUTTONS */
+.card button {
+  width: 48%;
+  margin-top: 10px;
+}
+
+.card button:last-child {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+/* MAP */
+#map {
+  height: 400px;
+  width: 100%;
+  margin-top: 30px;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+  z-index: 2;
+}
+
+/* ERROR */
+#error {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #f87171;
+  font-weight: bold;
+}
+
+/* TRIP COUNT */
+#tripCount {
+  margin-top: 15px;
+  font-size: 18px;
+  color: #38bdf8;
+}
+
+/* EMPTY TEXT */
+#result p {
+  font-size: 18px;
+  opacity: 0.7;
+}
+
+/* 🌙 LIGHT MODE */
+.light-mode {
+  background: #f1f5f9;
+  color: black;
+}
+
+.light-mode::before {
+  background: rgba(255,255,255,0.7);
+}
+
+.light-mode .card {
+  background: white;
+  color: black;
+}
+
+.light-mode input {
+  background: #e2e8f0;
+  color: black;
+}
+
+.light-mode button {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+/* 📱 MOBILE */
+@media (max-width: 768px) {
+
+  body {
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .search-box {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  input {
+    width: 90%;
+  }
+
+  button {
+    width: 90%;
+  }
+
+  .card {
+    width: 100%;
+  }
+
+  #map {
+    height: 250px;
+  }
+}
+
+/* 🎬 ANIMATION */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
