@@ -101,7 +101,7 @@ input::placeholder {
   color: #ddd;
 }
 
-/* AUTOCOMPLETE */
+/* 🔥 FIX AUTOCOMPLETE BUG */
 .pac-container {
   z-index: 9999 !important;
 }
@@ -147,7 +147,7 @@ button:active {
   border-radius: 15px;
 }
 
-/* CARD */
+/* 🔥 CARD FIX (IMPORTANT) */
 .card {
   padding: 15px;
   border-radius: 15px;
@@ -158,6 +158,7 @@ button:active {
 
   box-shadow: 0 10px 30px rgba(0,0,0,0.6);
   transition: all 0.4s ease;
+  overflow: hidden; /* 🔥 FIX image overflow */
 }
 
 .card:hover {
@@ -165,12 +166,20 @@ button:active {
   box-shadow: 0 20px 40px rgba(0,0,0,0.8);
 }
 
-/* IMAGE */
+/* 🔥 IMAGE FIX (IMPORTANT) */
 .card img {
   width: 100%;
   height: 170px;
   object-fit: cover;
   border-radius: 10px;
+
+  display: block;
+  background: #111; /* fallback */
+}
+
+/* 🔥 IMAGE ERROR FIX */
+.card img:broken {
+  display: none;
 }
 
 /* TEXT */
@@ -209,6 +218,7 @@ button:active {
 #error {
   margin-top: 10px;
   color: #f87171;
+  font-weight: bold;
 }
 
 /* 📱 MOBILE */
