@@ -34,16 +34,18 @@
 </div>
 
 <!-- 🌍 APP -->
-<div id="app" style="display:none;">
+<div id="app" style="display:none;" class="container">
 
 <h1>🌍 Travel Planner</h1>
 
+<!-- 🔍 INPUTS -->
 <div class="search-box">
   <input type="text" id="start" placeholder="Start location">
   <input type="text" id="destination" placeholder="Destination">
   <input type="number" id="days" placeholder="Days">
 </div>
 
+<!-- 🔘 BUTTONS -->
 <div class="top-buttons">
   <button onclick="planTrip()">➕ Plan</button>
   <button onclick="clearTrips()">🗑️ Clear</button>
@@ -51,11 +53,12 @@
   <button onclick="toggleMusic()">🎵 Music</button>
   <button onclick="getCurrentLocation()">📍 My Location</button>
 
-  <button onclick="showRoute()">🗺️ Route</button>
+  <!-- 🔥 ROUTE BUTTON -->
+  <button onclick="getDirections()">🗺️ Route</button>
+
   <button onclick="findPlaces('restaurant')">🍴 Food</button>
   <button onclick="findPlaces('lodging')">🏨 Hotels</button>
 
-  <!-- 🔥 NEW FEATURES -->
   <button onclick="getSuggestion()">🤖 AI Tips</button>
   <button onclick="downloadPDF()">📄 PDF</button>
 
@@ -63,9 +66,9 @@
 </div>
 
 <h3 id="tripCount"></h3>
-<p id="error" style="color:red;"></p>
+<p id="error"></p>
 
-<!-- 🤖 AI RESULT BOX (IMPORTANT FIX) -->
+<!-- 🤖 AI RESULT -->
 <div id="aiResult" class="card" style="display:none; margin-top:20px;"></div>
 
 <!-- 🧳 TRIPS -->
@@ -76,32 +79,24 @@
 
 </div>
 
-  <div class="container">
-  <!-- ඔයාගේ full app content -->
-</div>
-
 <!-- ✅ FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
-<!-- ✅ INIT FIREBASE -->
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyB_DNA69gwDLbHIUqYxMqC5h85uiqYzrfs",
+  apiKey: "YOUR_API_KEY",
   authDomain: "travel---planner.firebaseapp.com",
   projectId: "travel---planner",
 };
 
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
-
+firebase.initializeApp(firebaseConfig);
 window.auth = firebase.auth();
 window.db = firebase.firestore();
 </script>
 
-<!-- ✅ PDF LIB -->
+<!-- ✅ PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
 
 <!-- ✅ MAIN SCRIPT -->
@@ -109,7 +104,6 @@ window.db = firebase.firestore();
 
 <!-- 🔐 AUTH -->
 <script>
-
 window.signup = function () {
   let email = document.getElementById("email").value.trim();
   let password = document.getElementById("password").value.trim();
@@ -140,9 +134,6 @@ auth.onAuthStateChanged(user => {
   if (user) {
     document.getElementById("auth-box").style.display = "none";
     document.getElementById("app").style.display = "block";
-
-    if (typeof displayTrips === "function") displayTrips();
-
   } else {
     document.getElementById("auth-box").style.display = "block";
     document.getElementById("app").style.display = "none";
@@ -156,7 +147,7 @@ function showAuthError(msg) {
 
 <!-- 🌍 GOOGLE MAP -->
 <script async defer
-src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC0B36Hn9aFtnE7O-9fsJvxyaKQxANA04M&libraries=places&callback=initMap">
+src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places&callback=initMap">
 </script>
 
 </body>
