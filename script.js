@@ -20,8 +20,12 @@ window.initMap = function () {
         map: map
     });
 
+    // 🔥 ROUTE INIT (IMPORTANT FIX)
     directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer();
+    directionsRenderer = new google.maps.DirectionsRenderer({
+        suppressMarkers: false
+    });
+
     directionsRenderer.setMap(map);
 
     initAutocomplete();
@@ -29,9 +33,12 @@ window.initMap = function () {
 
 // ================= AUTOCOMPLETE =================
 function initAutocomplete() {
-    let input = document.getElementById("destination");
-    if (input && google.maps.places) {
-        new google.maps.places.Autocomplete(input);
+    let startInput = document.getElementById("start");
+    let destInput = document.getElementById("destination");
+
+    if (google.maps.places) {
+        if (startInput) new google.maps.places.Autocomplete(startInput);
+        if (destInput) new google.maps.places.Autocomplete(destInput);
     }
 }
 
@@ -61,32 +68,6 @@ window.planTrip = async function () {
     }
 };
 
-// ================= DELETE =================
-window.deleteTrip = async function (id) {
-    try {
-        await db.collection("trips").doc(id).delete();
-        displayTrips();
-    } catch {
-        showError("Delete failed ❌");
-    }
-};
-
-// ================= CLEAR =================
-window.clearTrips = async function () {
-    let user = auth.currentUser;
-    if (!user) return;
-
-    let snapshot = await db.collection("trips")
-        .where("userId", "==", user.uid)
-        .get();
-
-    let batch = db.batch();
-    snapshot.forEach(doc => batch.delete(doc.ref));
-    await batch.commit();
-
-    displayTrips();
-};
-
 // ================= LOCATION =================
 window.getCurrentLocation = function () {
     navigator.geolocation.getCurrentPosition(pos => {
@@ -99,26 +80,62 @@ window.getCurrentLocation = function () {
         map.setZoom(14);
         marker.setPosition(loc);
 
+        // 🔥 auto set start location
+        document.getElementById("start").value =
+            `${loc.lat}, ${loc.lng}`;
+
     }, () => showError("Location denied ❌"));
 };
 
-// ================= MUSIC =================
-window.toggleMusic = function () {
-    let music = document.getElementById("bg-music");
+// ================= ROUTE (🔥 FIXED) =================
+window.getDirections = function () {
 
-    if (!music) return;
+    let start = document.getElementById("start").value.trim();
+    let end = document.getElementById("destination").value.trim();
 
-    if (music.paused) {
-        music.muted = false;
-        music.play().catch(() => alert("Click again 🎵"));
-    } else {
-        music.pause();
+    if (!start || !end) {
+        return showError("Enter start & destination!");
     }
+
+    directionsService.route({
+        origin: start,
+        destination: end,
+        travelMode: google.maps.TravelMode.DRIVING
+    }, (res, status) => {
+
+        if (status === "OK") {
+            directionsRenderer.setDirections(res);
+
+            // 🔥 show distance + time
+            let route = res.routes[0].legs[0];
+            showError(`Distance: ${route.distance.text} | Time: ${route.duration.text}`);
+
+        } else {
+            showError("Route not found ❌");
+        }
+    });
 };
 
-// ================= THEME =================
-window.toggleTheme = function () {
-    document.body.classList.toggle("light-mode");
+// ================= PLACES =================
+window.findPlaces = function (type) {
+    let service = new google.maps.places.PlacesService(map);
+
+    service.nearbySearch({
+        location: map.getCenter(),
+        radius: 2000,
+        type: [type]
+    }, (results, status) => {
+
+        if (status !== "OK") return;
+
+        results.forEach(p => {
+            new google.maps.Marker({
+                map: map,
+                position: p.geometry.location,
+                title: p.name
+            });
+        });
+    });
 };
 
 // ================= WEATHER =================
@@ -162,56 +179,16 @@ window.showLocation = async function (city) {
         map.setZoom(12);
         marker.setPosition(pos);
 
+        // 🔥 auto fill destination
+        document.getElementById("destination").value = city;
+
     } catch {
         showError("Map error ❌");
     }
 };
 
-// ================= ROUTE =================
-window.showRoute = function () {
-    let start = document.getElementById("start").value;
-    let end = document.getElementById("destination").value;
-
-    if (!start || !end) return showError("Enter start & destination!");
-
-    directionsService.route({
-        origin: start,
-        destination: end,
-        travelMode: "DRIVING"
-    }, (res, status) => {
-        if (status === "OK") {
-            directionsRenderer.setDirections(res);
-        } else {
-            showError("Route not found!");
-        }
-    });
-};
-
-// ================= PLACES =================
-window.findPlaces = function (type) {
-    let service = new google.maps.places.PlacesService(map);
-
-    service.nearbySearch({
-        location: map.getCenter(),
-        radius: 2000,
-        type: [type]
-    }, (results, status) => {
-
-        if (status !== "OK") return;
-
-        results.forEach(p => {
-            new google.maps.Marker({
-                map: map,
-                position: p.geometry.location,
-                title: p.name
-            });
-        });
-    });
-};
-
-// ================= 🤖 AI SUGGESTION (FULL FIX) =================
+// ================= AI =================
 window.getSuggestion = async function () {
-
     let destination = document.getElementById("destination").value;
     let days = document.getElementById("days").value || 3;
 
@@ -220,59 +197,42 @@ window.getSuggestion = async function () {
     showError("AI planning... 🤖");
 
     try {
-        let response = await fetch(
+        let res = await fetch(
           `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API}`,
           {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               contents: [{
                 parts: [{
-                  text: `Plan a ${days}-day trip to ${destination}. Include places, food, and tips.`
+                  text: `Plan a ${days}-day trip to ${destination}`
                 }]
               }]
             })
           }
         );
 
-        let data = await response.json();
-        console.log("AI:", data);
-
+        let data = await res.json();
         let text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-        // 🔥 FALLBACK
-        if (!text) {
-            text = generateLocalPlan(destination, days);
-        }
+        if (!text) text = generateLocalPlan(destination, days);
 
-        alert("🤖 AI Plan:\n\n" + text);
+        alert(text);
         showError("");
 
-    } catch (err) {
-        console.error(err);
-
-        let text = generateLocalPlan(destination, days);
-
-        alert("🤖 AI Plan:\n\n" + text);
+    } catch {
+        alert(generateLocalPlan(destination, days));
         showError("");
     }
 };
 
-// ================= 🔥 LOCAL AI =================
+// ================= LOCAL AI =================
 function generateLocalPlan(destination, days) {
-
     let plan = `🌍 ${days}-Day Trip to ${destination}\n\n`;
 
     for (let i = 1; i <= days; i++) {
-        plan += `Day ${i}:\n`;
-        plan += `- Visit popular places 🏛️\n`;
-        plan += `- Try local food 🍜\n`;
-        plan += `- Take photos 📸\n\n`;
+        plan += `Day ${i}:\n- Explore\n- Food\n- Photos\n\n`;
     }
-
-    plan += "Tips:\n- Start early 🌅\n- Use maps 🗺️\n- Stay safe";
 
     return plan;
 }
@@ -305,7 +265,6 @@ async function displayTrips() {
     for (const doc of snapshot.docs) {
         let t = doc.data();
         let weather = await getWeather(t.destination);
-
         let image = `https://source.unsplash.com/400x300/?${t.destination}`;
 
         resultDiv.innerHTML += `
@@ -328,7 +287,7 @@ function showError(msg) {
     if (!e) return;
 
     e.innerText = msg;
-    setTimeout(() => e.innerText = "", 3000);
+    setTimeout(() => e.innerText = "", 4000);
 }
 
 // ================= AUTO LOAD =================
