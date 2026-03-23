@@ -20,7 +20,6 @@ window.initMap = function () {
         map: map
     });
 
-    // 🔥 ROUTE INIT (IMPORTANT FIX)
     directionsService = new google.maps.DirectionsService();
     directionsRenderer = new google.maps.DirectionsRenderer({
         suppressMarkers: false
@@ -68,6 +67,32 @@ window.planTrip = async function () {
     }
 };
 
+// ================= DELETE =================
+window.deleteTrip = async function (id) {
+    try {
+        await db.collection("trips").doc(id).delete();
+        displayTrips();
+    } catch {
+        showError("Delete failed ❌");
+    }
+};
+
+// ================= CLEAR =================
+window.clearTrips = async function () {
+    let user = auth.currentUser;
+    if (!user) return;
+
+    let snapshot = await db.collection("trips")
+        .where("userId", "==", user.uid)
+        .get();
+
+    let batch = db.batch();
+    snapshot.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+
+    displayTrips();
+};
+
 // ================= LOCATION =================
 window.getCurrentLocation = function () {
     navigator.geolocation.getCurrentPosition(pos => {
@@ -80,15 +105,14 @@ window.getCurrentLocation = function () {
         map.setZoom(14);
         marker.setPosition(loc);
 
-        // 🔥 auto set start location
         document.getElementById("start").value =
             `${loc.lat}, ${loc.lng}`;
 
     }, () => showError("Location denied ❌"));
 };
 
-// ================= ROUTE (🔥 FIXED) =================
-window.getDirections = function () {
+// ================= ROUTE =================
+window.showRoute = function () {
 
     let start = document.getElementById("start").value.trim();
     let end = document.getElementById("destination").value.trim();
@@ -106,7 +130,6 @@ window.getDirections = function () {
         if (status === "OK") {
             directionsRenderer.setDirections(res);
 
-            // 🔥 show distance + time
             let route = res.routes[0].legs[0];
             showError(`Distance: ${route.distance.text} | Time: ${route.duration.text}`);
 
@@ -179,7 +202,6 @@ window.showLocation = async function (city) {
         map.setZoom(12);
         marker.setPosition(pos);
 
-        // 🔥 auto fill destination
         document.getElementById("destination").value = city;
 
     } catch {
@@ -265,11 +287,13 @@ async function displayTrips() {
     for (const doc of snapshot.docs) {
         let t = doc.data();
         let weather = await getWeather(t.destination);
-        let image = `https://source.unsplash.com/400x300/?${t.destination}`;
+
+        // 🔥 FIXED IMAGE (NO ERROR)
+        let image = `https://picsum.photos/400/300?random=${Math.random()}`;
 
         resultDiv.innerHTML += `
         <div class="card">
-            <img src="${image}">
+            <img src="${image}" onerror="this.src='https://via.placeholder.com/400x300?text=Travel'">
             <h2>${t.destination}</h2>
             <p>${t.date}</p>
             <p>${weather}</p>
