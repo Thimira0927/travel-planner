@@ -53,8 +53,8 @@
   <button onclick="toggleMusic()">🎵 Music</button>
   <button onclick="getCurrentLocation()">📍 My Location</button>
 
-  <!-- ✅ ROUTE -->
-  <button onclick="showRoute()">🗺️ Route</button>
+  <!-- ✅ FIXED (script.js එකට match) -->
+  <button onclick="getDirections()">🗺️ Route</button>
 
   <button onclick="findPlaces('restaurant')">🍴 Food</button>
   <button onclick="findPlaces('lodging')">🏨 Hotels</button>
@@ -134,6 +134,11 @@ auth.onAuthStateChanged(user => {
   if (user) {
     document.getElementById("auth-box").style.display = "none";
     document.getElementById("app").style.display = "block";
+
+    if (typeof displayTrips === "function") {
+      displayTrips();
+    }
+
   } else {
     document.getElementById("auth-box").style.display = "block";
     document.getElementById("app").style.display = "none";
@@ -145,7 +150,7 @@ function showAuthError(msg) {
 }
 </script>
 
-<!-- 🌍 GOOGLE MAP ✅ FIXED -->
+<!-- 🌍 GOOGLE MAP -->
 <script async defer
 src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCh56XNMWu9ZZATyj-7-oEyn1Wk_K4yTlY&libraries=places&callback=initMap">
 </script>
