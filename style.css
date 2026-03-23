@@ -5,6 +5,13 @@
   box-sizing: border-box;
 }
 
+/* HTML + BODY FIX */
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
+
 /* BODY */
 body {
   font-family: 'Segoe UI', Arial, sans-serif;
@@ -12,29 +19,28 @@ body {
   color: white;
   text-align: center;
   padding: 40px;
-  overflow-x: hidden;
-  position: relative;
-  z-index: 1;
 }
 
-/* 🎬 BACKGROUND VIDEO */
+/* 🎬 BACKGROUND VIDEO (FIXED) */
 #bg-video {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   object-fit: cover;
   z-index: -2;
 }
 
-/* 🌑 DARK OVERLAY (LESS DARK) */
+/* 🌑 DARK OVERLAY (FIXED - NO SPLIT BUG) */
 body::before {
   content: "";
   position: fixed;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.45); /* 🔥 reduce darkness */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.45);
   z-index: -1;
 }
 
@@ -44,6 +50,7 @@ body > *:not(#bg-video) {
   z-index: 2;
 }
 
+/* BUTTON ANIMATION */
 button {
   animation: pulse 2s infinite;
 }
@@ -69,7 +76,6 @@ h1 {
   gap: 10px;
   flex-wrap: wrap;
 
-  /* 🔥 better glass */
   background: rgba(255,255,255,0.1);
   backdrop-filter: blur(10px);
   padding: 15px;
@@ -96,7 +102,7 @@ input::placeholder {
   color: #ddd;
 }
 
-/* 🔥 AUTOCOMPLETE FIX */
+/* AUTOCOMPLETE FIX */
 .pac-container {
   z-index: 9999 !important;
   border-radius: 10px;
@@ -136,20 +142,18 @@ button:hover {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 20px;
 
-  /* 🔥 ADD BACKGROUND FOR CLEAR VIEW */
   background: rgba(0,0,0,0.4);
   padding: 20px;
   border-radius: 15px;
 }
 
-/* CARD (🔥 MAIN FIX) */
+/* CARD */
 .card {
   text-align: left;
   padding: 15px;
   border-radius: 15px;
 
-  /* 🔥 FIXED VISIBILITY */
-  background: rgba(0, 0, 0, 0.6); /* darker instead of white glass */
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(8px);
 
   box-shadow: 0 8px 25px rgba(0,0,0,0.6);
@@ -174,7 +178,7 @@ button:hover {
 .card h2 {
   margin: 10px 0;
   font-size: 20px;
-  color: #38bdf8; /* 🔥 highlight */
+  color: #38bdf8;
 }
 
 .card p {
@@ -201,7 +205,6 @@ button:hover {
   border-radius: 15px;
   overflow: hidden;
   box-shadow: 0 10px 25px rgba(0,0,0,0.6);
-  z-index: 2;
 }
 
 /* ERROR */
@@ -282,7 +285,7 @@ button:hover {
   }
 }
 
-/* 🎬 ANIMATION */
+/* ANIMATION */
 @keyframes fadeIn {
   from {
     opacity: 0;
