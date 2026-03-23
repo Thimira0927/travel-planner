@@ -58,29 +58,35 @@ window.planTrip = async function () {
             destination,
             days: Number(days),
             startDate,
-            date: new Date().toLocaleDateString()
+            createdAt: new Date()
         });
 
         showError("Trip saved ✅");
         displayTrips();
 
-    } catch {
+    } catch (err) {
+        console.error(err);
         showError("Save failed ❌");
     }
 };
 
 // ================= DELETE =================
 window.deleteTrip = async function (id) {
+    if (!confirm("Delete this trip?")) return;
+
     try {
         await db.collection("trips").doc(id).delete();
         displayTrips();
-    } catch {
+    } catch (err) {
+        console.error(err);
         showError("Delete failed ❌");
     }
 };
 
 // ================= CLEAR =================
 window.clearTrips = async function () {
+    if (!confirm("Clear all trips?")) return;
+
     let user = auth.currentUser;
     if (!user) return;
 
@@ -211,10 +217,10 @@ window.showLocation = async function (city) {
     }
 };
 
-// ================= CALENDAR AUTO END DATE =================
+// ================= DATE CALC =================
 function calculateEndDate(startDate, days) {
     let d = new Date(startDate);
-    d.setDate(d.getDate() + Number(days));
+    d.setDate(d.getDate() + Number(days) - 1); // 🔥 fixed (correct end date)
     return d.toLocaleDateString();
 }
 
@@ -283,6 +289,7 @@ async function displayTrips() {
 
     let snapshot = await db.collection("trips")
         .where("userId", "==", user.uid)
+        .orderBy("createdAt", "desc")
         .get();
 
     resultDiv.innerHTML = "";
@@ -297,17 +304,17 @@ async function displayTrips() {
         let t = doc.data();
         let weather = await getWeather(t.destination);
 
-        let image = `https://picsum.photos/400/300?random=${Math.random()}`;
+        let image = `https://source.unsplash.com/400x300/?${t.destination},travel`;
         let endDate = calculateEndDate(t.startDate, t.days);
 
         resultDiv.innerHTML += `
         <div class="card">
-            <img src="${image}">
+            <img src="${image}" onerror="this.src='https://via.placeholder.com/400x300'">
             <h2>${t.destination}</h2>
-            <p>Start: ${t.startDate}</p>
-            <p>End: ${endDate}</p>
+            <p>📅 Start: ${t.startDate}</p>
+            <p>🏁 End: ${endDate}</p>
             <p>${weather}</p>
-            <p>Days: ${t.days}</p>
+            <p>⏳ Days: ${t.days}</p>
 
             <button onclick="showLocation('${t.destination}')">📍 Map</button>
             <button onclick="deleteTrip('${doc.id}')">❌ Delete</button>
