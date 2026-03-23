@@ -56,6 +56,9 @@ body > *:not(#bg-video) {
   max-width: 1100px;
   margin: auto;
 }
+input[type="date"] {
+  color: #fff;
+}
 
 /* 🌟 TITLE */
 h1 {
