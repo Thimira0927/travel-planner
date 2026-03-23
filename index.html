@@ -43,7 +43,9 @@
   <input type="text" id="start" placeholder="Start location">
   <input type="text" id="destination" placeholder="Destination">
   <input type="number" id="days" placeholder="Days">
-  <input type="date" id="tripDate">
+
+  <!-- ✅ FIXED ID -->
+  <input type="date" id="startDate">
 </div>
 
 <!-- 🔘 BUTTONS -->
@@ -54,8 +56,8 @@
   <button onclick="toggleMusic()">🎵 Music</button>
   <button onclick="getCurrentLocation()">📍 My Location</button>
 
-  <!-- ✅ FIXED (script.js එකට match) -->
-  <button onclick="getDirections()">🗺️ Route</button>
+  <!-- ✅ FIXED -->
+  <button onclick="showRoute()">🗺️ Route</button>
 
   <button onclick="findPlaces('restaurant')">🍴 Food</button>
   <button onclick="findPlaces('lodging')">🏨 Hotels</button>
@@ -68,9 +70,6 @@
 
 <h3 id="tripCount"></h3>
 <p id="error"></p>
-
-<!-- 🤖 AI RESULT -->
-<div id="aiResult" class="card" style="display:none; margin-top:20px;"></div>
 
 <!-- 🧳 TRIPS -->
 <div id="result"></div>
@@ -112,7 +111,6 @@ window.signup = function () {
   if (!email || !password) return showAuthError("Enter email & password");
 
   auth.createUserWithEmailAndPassword(email, password)
-    .then(() => showAuthError("Account created ✅"))
     .catch(err => showAuthError(err.message));
 };
 
@@ -123,7 +121,6 @@ window.login = function () {
   if (!email || !password) return showAuthError("Enter email & password");
 
   auth.signInWithEmailAndPassword(email, password)
-    .then(() => showAuthError(""))
     .catch(err => showAuthError(err.message));
 };
 
