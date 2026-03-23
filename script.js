@@ -21,9 +21,7 @@ window.initMap = function () {
     });
 
     directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer({
-        suppressMarkers: false
-    });
+    directionsRenderer = new google.maps.DirectionsRenderer();
 
     directionsRenderer.setMap(map);
 
@@ -45,8 +43,11 @@ function initAutocomplete() {
 window.planTrip = async function () {
     let destination = document.getElementById("destination").value.trim();
     let days = document.getElementById("days").value;
+    let startDate = document.getElementById("startDate")?.value;
 
-    if (!destination || !days) return showError("Enter all details!");
+    if (!destination || !days || !startDate) {
+        return showError("Enter all details!");
+    }
 
     let user = auth.currentUser;
     if (!user) return showError("Login first!");
@@ -56,6 +57,7 @@ window.planTrip = async function () {
             userId: user.uid,
             destination,
             days: Number(days),
+            startDate,
             date: new Date().toLocaleDateString()
         });
 
@@ -209,6 +211,13 @@ window.showLocation = async function (city) {
     }
 };
 
+// ================= CALENDAR AUTO END DATE =================
+function calculateEndDate(startDate, days) {
+    let d = new Date(startDate);
+    d.setDate(d.getDate() + Number(days));
+    return d.toLocaleDateString();
+}
+
 // ================= AI =================
 window.getSuggestion = async function () {
     let destination = document.getElementById("destination").value;
@@ -288,14 +297,15 @@ async function displayTrips() {
         let t = doc.data();
         let weather = await getWeather(t.destination);
 
-        // 🔥 FIXED IMAGE (NO ERROR)
         let image = `https://picsum.photos/400/300?random=${Math.random()}`;
+        let endDate = calculateEndDate(t.startDate, t.days);
 
         resultDiv.innerHTML += `
         <div class="card">
-            <img src="${image}" onerror="this.src='https://via.placeholder.com/400x300?text=Travel'">
+            <img src="${image}">
             <h2>${t.destination}</h2>
-            <p>${t.date}</p>
+            <p>Start: ${t.startDate}</p>
+            <p>End: ${endDate}</p>
             <p>${weather}</p>
             <p>Days: ${t.days}</p>
 
