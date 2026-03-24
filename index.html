@@ -10,7 +10,7 @@
 
 <body>
 
-<!-- 🎬 BACKGROUND -->
+<!-- 🎬 BACKGROUND VIDEO -->
 <video autoplay muted loop id="bg-video">
   <source src="video.mp4" type="video/mp4">
 </video>
@@ -22,7 +22,7 @@
 
 <!-- 🔐 LOGIN -->
 <div id="auth-box" class="card" style="max-width:300px; margin:auto;">
-  <h2>🔐 Login</h2>
+  <h2>Login</h2>
 
   <input type="email" id="email" placeholder="Email"><br><br>
   <input type="password" id="password" placeholder="Password"><br><br>
@@ -34,7 +34,7 @@
 </div>
 
 <!-- 🌍 APP -->
-<div id="app" style="display:none;" class="container">
+<div id="app" class="container" style="display:none;">
 
 <h1>🌍 Travel Planner</h1>
 
@@ -44,43 +44,35 @@
   <input type="text" id="destination" placeholder="Destination">
   <input type="number" id="days" placeholder="Days">
   <input type="date" id="startDate">
-
-  <!-- ✅ FIXED ID -->
-  <input type="date" id="startDate">
 </div>
 
 <!-- 🔘 BUTTONS -->
 <div class="top-buttons">
-  <button onclick="planTrip()">➕ Plan</button>
-  <button onclick="clearTrips()">🗑️ Clear</button>
-  <button onclick="toggleTheme()">🌙 Theme</button>
-  <button onclick="toggleMusic()">🎵 Music</button>
-  <button onclick="getCurrentLocation()">📍 My Location</button>
-
-  <!-- ✅ FIXED -->
-  <button onclick="showRoute()">🗺️ Route</button>
-
-  <button onclick="findPlaces('restaurant')">🍴 Food</button>
-  <button onclick="findPlaces('lodging')">🏨 Hotels</button>
-
-  <button onclick="getSuggestion()">🤖 AI Tips</button>
-  <button onclick="downloadPDF()">📄 PDF</button>
-
-  <button onclick="logout()">🚪 Logout</button>
+  <button onclick="planTrip()">Plan</button>
+  <button onclick="clearTrips()">Clear</button>
+  <button onclick="toggleTheme()">Theme</button>
+  <button onclick="toggleMusic()">Music</button>
+  <button onclick="getCurrentLocation()">My Location</button>
+  <button onclick="showRoute()">Route</button>
+  <button onclick="findPlaces('restaurant')">Food</button>
+  <button onclick="findPlaces('lodging')">Hotels</button>
+  <button onclick="getSuggestion()">AI Tips</button>
+  <button onclick="downloadPDF()">PDF</button>
+  <button onclick="logout()">Logout</button>
 </div>
 
 <h3 id="tripCount"></h3>
 <p id="error"></p>
 
-<!-- 🧳 TRIPS -->
+<div id="aiResult" class="card" style="display:none; margin-top:20px;"></div>
+
 <div id="result"></div>
 
-<!-- 🗺️ MAP -->
 <div id="map"></div>
 
 </div>
 
-<!-- ✅ FIREBASE -->
+<!-- 🔥 FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
@@ -97,15 +89,15 @@ window.auth = firebase.auth();
 window.db = firebase.firestore();
 </script>
 
-<!-- ✅ PDF -->
+<!-- 📄 PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
 
-<!-- ✅ MAIN SCRIPT -->
+<!-- 📜 MAIN JS -->
 <script src="script.js"></script>
 
 <!-- 🔐 AUTH -->
 <script>
-window.signup = function () {
+function signup() {
   let email = document.getElementById("email").value.trim();
   let password = document.getElementById("password").value.trim();
 
@@ -113,9 +105,9 @@ window.signup = function () {
 
   auth.createUserWithEmailAndPassword(email, password)
     .catch(err => showAuthError(err.message));
-};
+}
 
-window.login = function () {
+function login() {
   let email = document.getElementById("email").value.trim();
   let password = document.getElementById("password").value.trim();
 
@@ -123,11 +115,11 @@ window.login = function () {
 
   auth.signInWithEmailAndPassword(email, password)
     .catch(err => showAuthError(err.message));
-};
+}
 
-window.logout = function () {
+function logout() {
   auth.signOut();
-};
+}
 
 auth.onAuthStateChanged(user => {
   if (user) {
