@@ -35,7 +35,7 @@ body {
   z-index: -2;
 }
 
-/* 🌑 OVERLAY FIXED */
+/* 🌑 OVERLAY */
 body::before {
   content: "";
   position: fixed;
@@ -45,7 +45,7 @@ body::before {
   height: 100%;
   background: rgba(0,0,0,0.45);
   z-index: -1;
-  pointer-events: none; /* FIX click issue */
+  pointer-events: none;
 }
 
 /* CONTENT FRONT */
@@ -202,12 +202,13 @@ button:active {
   color: #e2e8f0;
 }
 
-/* DELETE BUTTON */
+/* CARD BUTTON */
 .card button {
   width: 100%;
   margin-top: 10px;
 }
 
+/* DELETE BUTTON */
 .card button:last-child {
   background: linear-gradient(135deg, #ef4444, #dc2626);
 }
@@ -228,17 +229,6 @@ button:active {
   animation: fadeIn 0.5s ease;
 }
 
-#aiResult h3 {
-  color: #38bdf8;
-  margin-bottom: 10px;
-}
-
-#aiResult p {
-  font-size: 15px;
-  line-height: 1.6;
-  color: #e2e8f0;
-}
-
 /* 🌍 MAP */
 #map {
   height: 400px;
@@ -248,6 +238,8 @@ button:active {
   overflow: hidden;
   border: 2px solid rgba(255,255,255,0.2);
   box-shadow: 0 15px 40px rgba(0,0,0,0.7);
+  position: relative;
+  z-index: 1;
 }
 
 /* ERROR */
