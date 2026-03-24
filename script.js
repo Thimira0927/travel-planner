@@ -95,7 +95,7 @@ window.toggleMusic = function () {
 
     if (music.paused) {
         music.play().catch(() => {
-            alert("Tap again to enable music 🎵");
+            alert("Click again to enable music 🎵");
         });
     } else {
         music.pause();
@@ -138,7 +138,7 @@ window.getCurrentLocation = function () {
     }, () => showError("Location denied ❌"));
 };
 
-// ================= SHOW LOCATION (🔥 NEW) =================
+// ================= SHOW LOCATION =================
 window.showLocation = async function (city) {
     if (!city) return showError("Enter destination!");
 
@@ -241,6 +241,56 @@ function calculateEndDate(startDate, days) {
     let d = new Date(startDate);
     d.setDate(d.getDate() + Number(days) - 1);
     return d.toLocaleDateString();
+}
+
+// ================= AI =================
+window.getSuggestion = async function () {
+    let destination = document.getElementById("destination").value;
+    let days = document.getElementById("days").value || 3;
+
+    if (!destination) return showError("Enter destination!");
+
+    let box = document.getElementById("aiResult");
+    box.style.display = "block";
+    box.innerHTML = "🤖 Generating plan...";
+
+    try {
+        let res = await fetch(
+          `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{
+                  text: `Plan a ${days}-day trip to ${destination}`
+                }]
+              }]
+            })
+          }
+        );
+
+        let data = await res.json();
+        let text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!text) text = generateLocalPlan(destination, days);
+
+        box.innerHTML = `<h3>🤖 AI Plan</h3><p>${text.replace(/\n/g, "<br>")}</p>`;
+
+    } catch {
+        box.innerHTML = generateLocalPlan(destination, days);
+    }
+};
+
+// ================= LOCAL AI =================
+function generateLocalPlan(destination, days) {
+    let plan = `<h3>🤖 AI Plan</h3>`;
+
+    for (let i = 1; i <= days; i++) {
+        plan += `<p><b>Day ${i}</b>: Explore, Food, Photos 📸</p>`;
+    }
+
+    return plan;
 }
 
 // ================= DISPLAY =================
