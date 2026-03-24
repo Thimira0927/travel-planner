@@ -1,10 +1,12 @@
-// API KEYS
+// ================= API KEYS =================
 const WEATHER_API = "0c2d1ffade57eaa1ad12b6c3eb3f5f82";
 const GEMINI_API = "AIzaSyAQzfVBDL8wEIJ9i4pxTPqdU0Hfu9zZ0E4";
 
+// Firebase (already initialized in HTML)
 const auth = window.auth;
 const db = window.db;
 
+// ================= GLOBAL =================
 let map, marker, directionsService, directionsRenderer, placeMarkers = [];
 
 // ================= MAP =================
@@ -47,7 +49,7 @@ window.signup = () => {
 
 window.logout = () => auth.signOut();
 
-// ================= PLAN =================
+// ================= PLAN TRIP =================
 window.planTrip = async () => {
     let dest = document.getElementById("destination").value.trim();
     let dayCount = document.getElementById("days").value;
@@ -72,12 +74,12 @@ window.planTrip = async () => {
         displayTrips();
 
     } catch (err) {
-        showError("Save failed ❌");
         console.error(err);
+        showError("Save failed ❌");
     }
 };
 
-// ================= DISPLAY =================
+// ================= DISPLAY TRIPS =================
 async function displayTrips() {
     let user = auth.currentUser;
     if (!user) return;
@@ -103,10 +105,13 @@ async function displayTrips() {
 
             resultDiv.innerHTML += `
             <div class="card">
+                <img src="https://source.unsplash.com/400x200/?${t.destination}" />
                 <h3>${t.destination}</h3>
                 <p>📅 ${t.startDate || "Not set"}</p>
                 <p>⏳ ${t.days} days</p>
+
                 <button onclick="showLocation('${t.destination}')">📍 Map</button>
+                <button onclick="showRoute()">🧭 Route</button>
                 <button onclick="deleteTrip('${doc.id}')">❌ Delete</button>
             </div>`;
         });
@@ -149,36 +154,7 @@ window.showRoute = () => {
     });
 };
 
-// ================= PLACES =================
-window.findPlaces = type => {
-
-    if (!map) return;
-
-    placeMarkers.forEach(m => m.setMap(null));
-    placeMarkers = [];
-
-    const service = new google.maps.places.PlacesService(map);
-
-    service.nearbySearch({
-        location: map.getCenter(),
-        radius: 2000,
-        type: [type]
-    }, (res, status) => {
-
-        if (status !== "OK") return;
-
-        res.forEach(p => {
-            let m = new google.maps.Marker({
-                map,
-                position: p.geometry.location,
-                title: p.name
-            });
-            placeMarkers.push(m);
-        });
-    });
-};
-
-// ================= LOCATION =================
+// ================= CURRENT LOCATION =================
 window.getCurrentLocation = () => {
     navigator.geolocation.getCurrentPosition(pos => {
         let loc = {
@@ -193,13 +169,13 @@ window.getCurrentLocation = () => {
     }, () => showError("Location denied ❌"));
 };
 
-// ================= SHOW LOCATION =================
+// ================= WEATHER + MAP =================
 window.showLocation = async (city) => {
     if (!city) return;
 
     try {
         let res = await fetch(
-            `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${WEATHER_API}`
+            `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${WEATHER_API}`
         );
 
         let data = await res.json();
@@ -215,17 +191,31 @@ window.showLocation = async (city) => {
         map.setZoom(12);
         marker.setPosition(pos);
 
+        // WEATHER UI
+        const aiBox = document.getElementById("aiResult");
+        aiBox.style.display = "block";
+
+        aiBox.innerHTML = `
+            <h3>🌦️ Weather in ${city}</h3>
+            <p>🌡️ Temp: ${data.main.temp}°C</p>
+            <p>☁️ ${data.weather[0].description}</p>
+            <p>💨 Wind: ${data.wind.speed} m/s</p>
+        `;
+
     } catch {
-        showError("Map error ❌");
+        showError("Weather error ❌");
     }
 };
 
-// ================= AI =================
+// ================= AI PLANNER =================
 window.getSuggestion = async () => {
     const aiBox = document.getElementById("aiResult");
 
     aiBox.style.display = "block";
-    aiBox.innerHTML = "🤖 Generating...";
+    aiBox.innerHTML = "🤖 Planning your trip...";
+
+    let dest = document.getElementById("destination").value;
+    let days = document.getElementById("days").value;
 
     try {
         let res = await fetch(
@@ -236,7 +226,7 @@ window.getSuggestion = async () => {
                 body: JSON.stringify({
                     contents: [{
                         parts: [{
-                            text: `Plan trip to ${document.getElementById("destination").value}`
+                            text: `Create a ${days}-day travel plan for ${dest}. Include places, food, and tips.`
                         }]
                     }]
                 })
@@ -246,9 +236,9 @@ window.getSuggestion = async () => {
         let data = await res.json();
         let text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-        if (!text) text = "No AI response 😢";
-
-        aiBox.innerHTML = text.replace(/\n/g, "<br>");
+        aiBox.innerHTML = text
+            ? text.replace(/\n/g, "<br>")
+            : "No AI response 😢";
 
     } catch {
         aiBox.innerHTML = "AI error ❌";
