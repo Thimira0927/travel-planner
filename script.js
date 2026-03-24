@@ -82,6 +82,23 @@ window.deleteTrip = async function (id) {
         showError("Delete failed ❌");
     }
 };
+// ================= THEME =================
+window.toggleTheme = function () {
+    document.body.classList.toggle("light-mode");
+};
+
+// ================= MUSIC =================
+window.toggleMusic = function () {
+    let music = document.getElementById("bg-music");
+
+    if (!music) return;
+
+    if (music.paused) {
+        music.play();
+    } else {
+        music.pause();
+    }
+};
 
 // ================= CLEAR =================
 window.clearTrips = async function () {
