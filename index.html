@@ -85,7 +85,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// AUTO LOGIN UI SWITCH
+// AUTO LOGIN SWITCH
 auth.onAuthStateChanged(user => {
   document.getElementById("auth-box").style.display = user ? "none" : "block";
   document.getElementById("app").style.display = user ? "block" : "none";
@@ -99,9 +99,9 @@ src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnXXGPeMIhQ1KvzgeBOoEF6FM
 
 <!-- SCRIPT -->
 <script>
-let map;
+let map, marker;
 
-// MAP
+// MAP INIT
 function initMap() {
   const loc = { lat: 7.8731, lng: 80.7718 };
 
@@ -109,17 +109,32 @@ function initMap() {
     center: loc,
     zoom: 7
   });
+
+  marker = new google.maps.Marker({
+    position: loc,
+    map: map
+  });
+
+  // autocomplete
+  new google.maps.places.Autocomplete(document.getElementById("start"));
+  new google.maps.places.Autocomplete(document.getElementById("destination"));
 }
 
 // LOGIN
 function login() {
-  auth.signInWithEmailAndPassword(email.value, password.value)
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  auth.signInWithEmailAndPassword(email, password)
     .catch(err => showError(err.message));
 }
 
 // SIGNUP
 function signup() {
-  auth.createUserWithEmailAndPassword(email.value, password.value)
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  auth.createUserWithEmailAndPassword(email, password)
     .then(() => showError("Signup success ✅"))
     .catch(err => showError(err.message));
 }
@@ -131,33 +146,37 @@ function logout() {
 
 // PLAN
 function planTrip() {
-  if (!destination.value || !days.value) {
+  const destination = document.getElementById("destination").value;
+  const days = document.getElementById("days").value;
+  const startDate = document.getElementById("startDate").value;
+
+  if (!destination || !days) {
     return showError("Enter details!");
   }
 
-  result.innerHTML = `
+  document.getElementById("result").innerHTML += `
     <div class="card">
-      <h2>${destination.value}</h2>
-      <p>📅 ${startDate.value}</p>
-      <p>⏳ ${days.value} days</p>
+      <h2>${destination}</h2>
+      <p>📅 ${startDate || "Not set"}</p>
+      <p>⏳ ${days} days</p>
     </div>
   `;
 }
 
 // CLEAR
 function clearTrips() {
-  result.innerHTML = "";
+  document.getElementById("result").innerHTML = "";
 }
 
-// THEME FIXED
+// THEME
 function toggleTheme() {
   document.body.classList.toggle("light-mode");
 }
 
 // MUSIC
 function toggleMusic() {
-  bgMusic = document.getElementById("bg-music");
-  bgMusic.paused ? bgMusic.play() : bgMusic.pause();
+  const music = document.getElementById("bg-music");
+  music.paused ? music.play() : music.pause();
 }
 
 // PDF
@@ -167,6 +186,7 @@ function downloadPDF() {
 
 // ERROR
 function showError(msg) {
+  const error = document.getElementById("error");
   error.innerText = msg;
   setTimeout(() => error.innerText = "", 3000);
 }
