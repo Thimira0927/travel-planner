@@ -2,12 +2,12 @@
 const WEATHER_API = "0c2d1ffade57eaa1ad12b6c3eb3f5f82";
 const GEMINI_API = "AIzaSyAQzfVBDL8wEIJ9i4pxTPqdU0Hfu9zZ0E4";
 
-// Firebase (already initialized in HTML)
+// Firebase
 const auth = window.auth;
 const db = window.db;
 
 // ================= GLOBAL =================
-let map, marker, directionsService, directionsRenderer, placeMarkers = [];
+let map, marker, directionsService, directionsRenderer;
 
 // ================= MAP =================
 window.initMap = function () {
@@ -30,19 +30,19 @@ window.initMap = function () {
 
 // ================= AUTH =================
 window.login = () => {
-    const emailVal = document.getElementById("email").value;
-    const passVal = document.getElementById("password").value;
+    const email = document.getElementById("email").value;
+    const pass = document.getElementById("password").value;
 
-    auth.signInWithEmailAndPassword(emailVal, passVal)
+    auth.signInWithEmailAndPassword(email, pass)
         .then(() => displayTrips())
         .catch(e => showError(e.message));
 };
 
 window.signup = () => {
-    const emailVal = document.getElementById("email").value;
-    const passVal = document.getElementById("password").value;
+    const email = document.getElementById("email").value;
+    const pass = document.getElementById("password").value;
 
-    auth.createUserWithEmailAndPassword(emailVal, passVal)
+    auth.createUserWithEmailAndPassword(email, pass)
         .then(() => showError("Signup success ✅"))
         .catch(e => showError(e.message));
 };
@@ -51,22 +51,20 @@ window.logout = () => auth.signOut();
 
 // ================= PLAN TRIP =================
 window.planTrip = async () => {
-    let dest = document.getElementById("destination").value.trim();
-    let dayCount = document.getElementById("days").value;
-    let startDate = document.getElementById("startDate").value;
+    const dest = document.getElementById("destination").value.trim();
+    const days = document.getElementById("days").value;
+    const startDate = document.getElementById("startDate").value;
 
-    if (!dest || !dayCount) {
-        return showError("Enter destination & days!");
-    }
+    if (!dest || !days) return showError("Enter destination & days!");
 
-    let user = auth.currentUser;
+    const user = auth.currentUser;
     if (!user) return showError("Login first!");
 
     try {
         await db.collection("trips").add({
             userId: user.uid,
             destination: dest,
-            days: Number(dayCount),
+            days: Number(days),
             startDate
         });
 
@@ -79,16 +77,16 @@ window.planTrip = async () => {
     }
 };
 
-// ================= DISPLAY TRIPS =================
+// ================= DISPLAY =================
 async function displayTrips() {
-    let user = auth.currentUser;
+    const user = auth.currentUser;
     if (!user) return;
 
     const resultDiv = document.getElementById("result");
     const countDiv = document.getElementById("tripCount");
 
     try {
-        let snap = await db.collection("trips")
+        const snap = await db.collection("trips")
             .where("userId", "==", user.uid)
             .get();
 
@@ -101,7 +99,7 @@ async function displayTrips() {
         }
 
         snap.forEach(doc => {
-            let t = doc.data();
+            const t = doc.data();
 
             resultDiv.innerHTML += `
             <div class="card">
@@ -111,7 +109,7 @@ async function displayTrips() {
                 <p>⏳ ${t.days} days</p>
 
                 <button onclick="showLocation('${t.destination}')">📍 Map</button>
-                <button onclick="showRoute()">🧭 Route</button>
+                <button onclick="showRouteTo('${t.destination}')">🧭 Route</button>
                 <button onclick="deleteTrip('${doc.id}')">❌ Delete</button>
             </div>`;
         });
@@ -132,13 +130,29 @@ window.deleteTrip = id => {
 };
 
 // ================= ROUTE =================
-window.showRoute = () => {
-    let start = document.getElementById("start").value;
-    let dest = document.getElementById("destination").value;
 
-    if (!start || !dest) {
-        return showError("Enter start & destination!");
-    }
+// BUTTON ROUTE (inputs වලින්)
+window.showRoute = () => {
+    const start = document.getElementById("start").value;
+    const dest = document.getElementById("destination").value;
+
+    if (!start || !dest) return showError("Enter start & destination!");
+
+    drawRoute(start, dest);
+};
+
+// CARD ROUTE (destination only)
+window.showRouteTo = (dest) => {
+    const start = document.getElementById("start").value;
+
+    if (!start) return showError("Enter start location!");
+
+    drawRoute(start, dest);
+};
+
+// CORE ROUTE FUNCTION
+function drawRoute(start, dest) {
+    if (!directionsService) return;
 
     directionsService.route({
         origin: start,
@@ -152,12 +166,14 @@ window.showRoute = () => {
             showError("Route not found ❌");
         }
     });
-};
+}
 
 // ================= CURRENT LOCATION =================
 window.getCurrentLocation = () => {
+    if (!navigator.geolocation) return showError("Geolocation not supported");
+
     navigator.geolocation.getCurrentPosition(pos => {
-        let loc = {
+        const loc = {
             lat: pos.coords.latitude,
             lng: pos.coords.longitude
         };
@@ -169,20 +185,18 @@ window.getCurrentLocation = () => {
     }, () => showError("Location denied ❌"));
 };
 
-// ================= WEATHER + MAP =================
+// ================= LOCATION + WEATHER =================
 window.showLocation = async (city) => {
-    if (!city) return;
-
     try {
-        let res = await fetch(
+        const res = await fetch(
             `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${WEATHER_API}`
         );
 
-        let data = await res.json();
+        const data = await res.json();
 
         if (!data.coord) return showError("Location not found!");
 
-        let pos = {
+        const pos = {
             lat: data.coord.lat,
             lng: data.coord.lon
         };
@@ -191,13 +205,13 @@ window.showLocation = async (city) => {
         map.setZoom(12);
         marker.setPosition(pos);
 
-        // WEATHER UI
-        const aiBox = document.getElementById("aiResult");
-        aiBox.style.display = "block";
+        // WEATHER BOX
+        const box = document.getElementById("aiResult");
+        box.style.display = "block";
 
-        aiBox.innerHTML = `
-            <h3>🌦️ Weather in ${city}</h3>
-            <p>🌡️ Temp: ${data.main.temp}°C</p>
+        box.innerHTML = `
+            <h3>🌦️ Weather - ${city}</h3>
+            <p>🌡️ ${data.main.temp}°C</p>
             <p>☁️ ${data.weather[0].description}</p>
             <p>💨 Wind: ${data.wind.speed} m/s</p>
         `;
@@ -207,18 +221,20 @@ window.showLocation = async (city) => {
     }
 };
 
-// ================= AI PLANNER =================
+// ================= AI =================
 window.getSuggestion = async () => {
-    const aiBox = document.getElementById("aiResult");
+    const box = document.getElementById("aiResult");
 
-    aiBox.style.display = "block";
-    aiBox.innerHTML = "🤖 Planning your trip...";
+    const dest = document.getElementById("destination").value;
+    const days = document.getElementById("days").value;
 
-    let dest = document.getElementById("destination").value;
-    let days = document.getElementById("days").value;
+    if (!dest || !days) return showError("Enter destination & days!");
+
+    box.style.display = "block";
+    box.innerHTML = "🤖 Generating plan...";
 
     try {
-        let res = await fetch(
+        const res = await fetch(
             `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API}`,
             {
                 method: "POST",
@@ -233,37 +249,37 @@ window.getSuggestion = async () => {
             }
         );
 
-        let data = await res.json();
-        let text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        const data = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-        aiBox.innerHTML = text
+        box.innerHTML = text
             ? text.replace(/\n/g, "<br>")
             : "No AI response 😢";
 
     } catch {
-        aiBox.innerHTML = "AI error ❌";
+        box.innerHTML = "AI error ❌";
     }
 };
 
 // ================= PDF =================
 window.downloadPDF = () =>
-    html2pdf().from(document.body).save("plan.pdf");
+    html2pdf().from(document.body).save("travel-plan.pdf");
 
 // ================= CLEAR =================
 window.clearTrips = async () => {
-    let user = auth.currentUser;
+    const user = auth.currentUser;
     if (!user) return;
 
     if (!confirm("Clear all trips?")) return;
 
-    let snap = await db.collection("trips")
+    const snap = await db.collection("trips")
         .where("userId", "==", user.uid)
         .get();
 
-    let batch = db.batch();
+    const batch = db.batch();
     snap.forEach(doc => batch.delete(doc.ref));
-    await batch.commit();
 
+    await batch.commit();
     displayTrips();
 };
 
