@@ -1,3 +1,4 @@
+```javascript
 // 🌦️ Weather API
 const WEATHER_API = "0c2d1ffade57eaa1ad12b6c3eb3f5f82";
 
@@ -332,6 +333,26 @@ async function displayTrips() {
     }
 }
 
+// ================= PDF DOWNLOAD =================
+window.downloadPDF = function () {
+
+    let element = document.getElementById("app");
+
+    if (!element) {
+        return showError("Nothing to download ❌");
+    }
+
+    let opt = {
+        margin: 0.5,
+        filename: 'travel-plans.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(element).save();
+};
+
 // ================= ERROR =================
 function showError(msg) {
     let e = document.getElementById("error");
@@ -345,3 +366,4 @@ function showError(msg) {
 auth.onAuthStateChanged(user => {
     if (user) displayTrips();
 });
+```
