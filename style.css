@@ -35,7 +35,7 @@ body {
   z-index: -2;
 }
 
-/* 🌑 OVERLAY (LESS DARK FIX) */
+/* 🌑 OVERLAY */
 body::before {
   content: "";
   position: fixed;
@@ -43,7 +43,7 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.35); /* FIX */
+  background: rgba(0,0,0,0.35);
   z-index: -1;
   pointer-events: none;
 }
@@ -90,29 +90,25 @@ input {
   border-radius: 10px;
   border: none;
   outline: none;
-  min-width: 180px; /* FIX */
-  flex: 1; /* FIX */
-  background: rgba(255,255,255,0.2);
+  min-width: 180px;
+  flex: 1;
+  background: rgba(0,0,0,0.5); /* 🔥 better visibility */
   color: white;
   transition: 0.3s;
 }
 
 input::placeholder {
-  color: #ddd;
+  color: #ccc;
 }
 
 /* DATE */
-input[type="date"] {
-  color: white;
-}
-
 input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
 }
 
 /* INPUT FOCUS */
 input:focus {
-  background: rgba(255,255,255,0.3);
+  background: rgba(0,0,0,0.7);
 }
 
 /* AUTOCOMPLETE FIX */
@@ -150,7 +146,7 @@ button:active {
   margin-top: 10px;
 }
 
-/* RESULT GRID (FIX BLACK BAR) */
+/* RESULT GRID */
 #result {
   margin-top: 25px;
   margin-bottom: 40px;
@@ -158,8 +154,8 @@ button:active {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 20px;
 
-  background: transparent; /* FIX */
-  padding: 0; /* FIX */
+  background: transparent;
+  padding: 0;
 }
 
 /* CARD */
@@ -168,7 +164,7 @@ button:active {
   border-radius: 15px;
   text-align: left;
 
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.65);
   backdrop-filter: blur(10px);
 
   box-shadow: 0 10px 30px rgba(0,0,0,0.6);
@@ -193,7 +189,7 @@ button:active {
 }
 
 /* TEXT */
-.card h2 {
+.card h3 {
   margin: 10px 0;
   color: #38bdf8;
 }
@@ -221,7 +217,7 @@ button:active {
   padding: 20px;
   border-radius: 20px;
 
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(15px);
 
   box-shadow: 0 10px 40px rgba(0,0,0,0.7);
@@ -230,15 +226,20 @@ button:active {
   animation: fadeIn 0.5s ease;
 }
 
-/* 🌍 MAP */
+/* 🌍 MAP FIX */
 #map {
-  height: 400px;
+  height: 450px;
   width: 100%;
-  margin-top: 30px; /* FIX */
+  margin-top: 40px;
   border-radius: 20px;
   overflow: hidden;
   border: 2px solid rgba(255,255,255,0.2);
   box-shadow: 0 15px 40px rgba(0,0,0,0.7);
+}
+
+/* REMOVE MAP OVERLAY ISSUE */
+.gm-style {
+  filter: none !important;
 }
 
 /* ERROR */
