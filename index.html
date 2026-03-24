@@ -24,8 +24,10 @@
 <div id="auth-box" class="card" style="max-width:300px; margin:auto;">
   <h2>🔐 Login</h2>
 
-  <input type="email" id="email" placeholder="Email"><br><br>
-  <input type="password" id="password" placeholder="Password"><br><br>
+  <input type="email" id="email" placeholder="Email">
+  <br><br>
+  <input type="password" id="password" placeholder="Password">
+  <br><br>
 
   <button onclick="login()">Login</button>
   <button onclick="signup()">Sign Up</button>
@@ -55,9 +57,12 @@
   <button onclick="getCurrentLocation()">📍 My Location</button>
 
   <button onclick="showRoute()">🗺️ Route</button>
+
+  <!-- 🔥 FIXED MAP BUTTON -->
   <button onclick="showLocation(document.getElementById('destination').value)">
-📍 Map
-</button>
+    📍 Map
+  </button>
+
   <button onclick="findPlaces('restaurant')">🍴 Food</button>
   <button onclick="findPlaces('lodging')">🏨 Hotels</button>
   <button onclick="getSuggestion()">🤖 AI Tips</button>
