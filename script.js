@@ -1,3 +1,4 @@
+```javascript
 // 🌦️ Weather API
 const WEATHER_API = "0c2d1ffade57eaa1ad12b6c3eb3f5f82";
 
@@ -22,7 +23,6 @@ window.initMap = function () {
 
     directionsService = new google.maps.DirectionsService();
     directionsRenderer = new google.maps.DirectionsRenderer();
-
     directionsRenderer.setMap(map);
 
     initAutocomplete();
@@ -43,7 +43,7 @@ function initAutocomplete() {
 window.planTrip = async function () {
     let destination = document.getElementById("destination").value.trim();
     let days = document.getElementById("days").value;
-    let startDate = document.getElementById("startDate")?.value;
+    let startDate = document.getElementById("tripDate")?.value;
 
     if (!destination || !days || !startDate) {
         return showError("Enter all details!");
@@ -120,218 +120,7 @@ window.getCurrentLocation = function () {
 };
 
 // ================= ROUTE =================
-window.showRoute = function () {
+window.getDirections = function () {
 
-    let start = document.getElementById("start").value.trim();
-    let end = document.getElementById("destination").value.trim();
-
-    if (!start || !end) {
-        return showError("Enter start & destination!");
-    }
-
-    directionsService.route({
-        origin: start,
-        destination: end,
-        travelMode: google.maps.TravelMode.DRIVING
-    }, (res, status) => {
-
-        if (status === "OK") {
-            directionsRenderer.setDirections(res);
-
-            let route = res.routes[0].legs[0];
-            showError(`Distance: ${route.distance.text} | Time: ${route.duration.text}`);
-
-        } else {
-            showError("Route not found ❌");
-        }
-    });
-};
-
-// ================= PLACES =================
-window.findPlaces = function (type) {
-    let service = new google.maps.places.PlacesService(map);
-
-    service.nearbySearch({
-        location: map.getCenter(),
-        radius: 2000,
-        type: [type]
-    }, (results, status) => {
-
-        if (status !== "OK") return;
-
-        results.forEach(p => {
-            new google.maps.Marker({
-                map: map,
-                position: p.geometry.location,
-                title: p.name
-            });
-        });
-    });
-};
-
-// ================= WEATHER =================
-async function getWeather(city) {
-    try {
-        let res = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${WEATHER_API}&units=metric`
-        );
-
-        let data = await res.json();
-
-        if (data.cod !== 200) return "Not found ❌";
-
-        let icon = data.weather[0].icon;
-        let iconUrl = `https://openweathermap.org/img/wn/${icon}@2x.png`;
-
-        return `<img src="${iconUrl}" width="40"> ${data.main.temp}°C`;
-
-    } catch {
-        return "Error ⚠️";
-    }
-}
-
-// ================= MAP LOCATION =================
-window.showLocation = async function (city) {
-    try {
-        let res = await fetch(
-          `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${WEATHER_API}`
-        );
-
-        let data = await res.json();
-
-        if (!data.coord) return showError("Location not found!");
-
-        let pos = {
-            lat: data.coord.lat,
-            lng: data.coord.lon
-        };
-
-        map.setCenter(pos);
-        map.setZoom(12);
-        marker.setPosition(pos);
-
-        document.getElementById("destination").value = city;
-
-    } catch {
-        showError("Map error ❌");
-    }
-};
-
-// ================= DATE CALC =================
-function calculateEndDate(startDate, days) {
-    let d = new Date(startDate);
-    d.setDate(d.getDate() + Number(days) - 1); // 🔥 fixed (correct end date)
-    return d.toLocaleDateString();
-}
-
-// ================= AI =================
-window.getSuggestion = async function () {
-    let destination = document.getElementById("destination").value;
-    let days = document.getElementById("days").value || 3;
-
-    if (!destination) return showError("Enter destination!");
-
-    showError("AI planning... 🤖");
-
-    try {
-        let res = await fetch(
-          `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{
-                parts: [{
-                  text: `Plan a ${days}-day trip to ${destination}`
-                }]
-              }]
-            })
-          }
-        );
-
-        let data = await res.json();
-        let text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        if (!text) text = generateLocalPlan(destination, days);
-
-        alert(text);
-        showError("");
-
-    } catch {
-        alert(generateLocalPlan(destination, days));
-        showError("");
-    }
-};
-
-// ================= LOCAL AI =================
-function generateLocalPlan(destination, days) {
-    let plan = `🌍 ${days}-Day Trip to ${destination}\n\n`;
-
-    for (let i = 1; i <= days; i++) {
-        plan += `Day ${i}:\n- Explore\n- Food\n- Photos\n\n`;
-    }
-
-    return plan;
-}
-
-// ================= PDF =================
-window.downloadPDF = function () {
-    html2pdf().from(document.getElementById("result")).save("travel-plan.pdf");
-};
-
-// ================= DISPLAY =================
-async function displayTrips() {
-    let user = auth.currentUser;
-    if (!user) return;
-
-    let resultDiv = document.getElementById("result");
-    let countDiv = document.getElementById("tripCount");
-
-    let snapshot = await db.collection("trips")
-        .where("userId", "==", user.uid)
-        .orderBy("createdAt", "desc")
-        .get();
-
-    resultDiv.innerHTML = "";
-    countDiv.innerHTML = `Total Trips: ${snapshot.size}`;
-
-    if (snapshot.empty) {
-        resultDiv.innerHTML = "<p>No trips yet 😢</p>";
-        return;
-    }
-
-    for (const doc of snapshot.docs) {
-        let t = doc.data();
-        let weather = await getWeather(t.destination);
-
-        let image = `https://source.unsplash.com/400x300/?${t.destination},travel`;
-        let endDate = calculateEndDate(t.startDate, t.days);
-
-        resultDiv.innerHTML += `
-        <div class="card">
-            <img src="${image}" onerror="this.src='https://via.placeholder.com/400x300'">
-            <h2>${t.destination}</h2>
-            <p>📅 Start: ${t.startDate}</p>
-            <p>🏁 End: ${endDate}</p>
-            <p>${weather}</p>
-            <p>⏳ Days: ${t.days}</p>
-
-            <button onclick="showLocation('${t.destination}')">📍 Map</button>
-            <button onclick="deleteTrip('${doc.id}')">❌ Delete</button>
-        </div>`;
-    }
-}
-
-// ================= ERROR =================
-function showError(msg) {
-    let e = document.getElementById("error");
-    if (!e) return;
-
-    e.innerText = msg;
-    setTimeout(() => e.innerText = "", 4000);
-}
-
-// ================= AUTO LOAD =================
-auth.onAuthStateChanged(user => {
-    if (user) displayTrips();
-});
+    let start = document.getElementB
+```
