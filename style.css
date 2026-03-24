@@ -10,7 +10,7 @@ html {
   width: 100%;
   height: 100%;
   overflow-x: hidden;
-  scroll-behavior: smooth; /* 🔥 smooth scroll */
+  scroll-behavior: smooth;
 }
 
 /* BODY */
@@ -21,8 +21,7 @@ body {
   text-align: center;
   padding: 40px;
   animation: fadePage 1s ease-in-out;
-
-  transition: background 0.4s, color 0.4s; /* 🔥 smooth theme */
+  transition: background 0.4s, color 0.4s;
 }
 
 /* 🎬 VIDEO BACKGROUND */
@@ -54,7 +53,7 @@ body > *:not(#bg-video) {
   z-index: 2;
 }
 
-/* 📱 APP CONTAINER */
+/* 📱 CONTAINER */
 .container {
   max-width: 1100px;
   margin: auto;
@@ -152,6 +151,7 @@ button:active {
 /* RESULT GRID */
 #result {
   margin-top: 25px;
+  margin-bottom: 40px; /* 🔥 FIX: map overlap prevent */
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 20px;
@@ -207,6 +207,7 @@ button:active {
   margin-top: 10px;
 }
 
+/* DELETE BUTTON */
 .card button:last-child {
   background: linear-gradient(135deg, #ef4444, #dc2626);
 }
@@ -215,11 +216,12 @@ button:active {
 #map {
   height: 400px;
   width: 100%;
-  margin-top: 30px;
+  margin-top: 50px; /* 🔥 FIX: space */
   border-radius: 20px;
   overflow: hidden;
   border: 2px solid rgba(255,255,255,0.2);
   box-shadow: 0 15px 40px rgba(0,0,0,0.7);
+  z-index: 1;
 }
 
 /* ERROR */
@@ -267,10 +269,6 @@ button:active {
 
 .light-mode #result {
   background: rgba(255,255,255,0.6);
-}
-
-.light-mode button {
-  color: white;
 }
 
 /* 📱 MOBILE */
