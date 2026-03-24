@@ -5,11 +5,12 @@
   box-sizing: border-box;
 }
 
-/* HTML + BODY */
-html, body {
+/* HTML */
+html {
   width: 100%;
   height: 100%;
   overflow-x: hidden;
+  scroll-behavior: smooth; /* 🔥 smooth scroll */
 }
 
 /* BODY */
@@ -20,6 +21,8 @@ body {
   text-align: center;
   padding: 40px;
   animation: fadePage 1s ease-in-out;
+
+  transition: background 0.4s, color 0.4s; /* 🔥 smooth theme */
 }
 
 /* 🎬 VIDEO BACKGROUND */
@@ -96,6 +99,11 @@ input {
 /* DATE INPUT */
 input[type="date"] {
   color: white;
+}
+
+/* DATE ICON FIX */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
 }
 
 /* INPUT FOCUS */
@@ -221,7 +229,7 @@ button:active {
   font-weight: bold;
 }
 
-/* 🌞 LIGHT MODE (FIXED PROPERLY) */
+/* 🌞 LIGHT MODE */
 .light-mode {
   background: #f1f5f9;
   color: #111;
@@ -240,6 +248,10 @@ button:active {
   color: #111;
 }
 
+.light-mode .card h2 {
+  color: #0072ff;
+}
+
 .light-mode .card p {
   color: #333;
 }
@@ -255,6 +267,10 @@ button:active {
 
 .light-mode #result {
   background: rgba(255,255,255,0.6);
+}
+
+.light-mode button {
+  color: white;
 }
 
 /* 📱 MOBILE */
