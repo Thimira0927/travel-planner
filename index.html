@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🌍 Travel Planner</title>
+<title>🌍 Travel Planner Pro</title>
 
 <link rel="stylesheet" href="style.css">
 
@@ -15,22 +15,16 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
-<style>
-body {
-  font-family: Arial;
-  text-align: center;
-}
-#map {
-  height: 400px;
-  width: 90%;
-  margin: 20px auto;
-  border-radius: 10px;
-}
-</style>
-
 </head>
 
 <body>
+
+<!-- VIDEO BACKGROUND -->
+<video autoplay muted loop id="bg-video">
+  <source src="https://www.w3schools.com/howto/rain.mp4" type="video/mp4">
+</video>
+
+<div class="container">
 
 <h1>🌍 Travel Planner</h1>
 
@@ -52,7 +46,7 @@ body {
   <input id="startDate" type="date">
 </div>
 
-<div class="buttons">
+<div class="top-buttons">
   <button onclick="planTrip()">Plan</button>
   <button onclick="clearTrips()">Clear</button>
   <button onclick="toggleTheme()">Theme</button>
@@ -62,32 +56,43 @@ body {
 </div>
 
 <p id="error"></p>
+<h3 id="tripCount"></h3>
+
 <div id="result"></div>
 <div id="map"></div>
 
 </div>
 
-<!-- Music -->
+</div>
+
+<!-- MUSIC -->
 <audio id="bg-music" loop>
 <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">
 </audio>
 
-<!-- Firebase Config -->
+<!-- FIREBASE CONFIG -->
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyB_DNA69gwDLbHIUqYxMqC5h85uiqYzrfs",
   authDomain: "travel---planner.firebaseapp.com",
   projectId: "travel---planner",
   storageBucket: "travel---planner.appspot.com",
-  messagingSenderId: "123456789", 
+  messagingSenderId: "123456789",
   appId: "1:123456789:web:abc123"
 };
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
+const db = firebase.firestore();
+
+// AUTO LOGIN UI SWITCH
+auth.onAuthStateChanged(user => {
+  document.getElementById("auth-box").style.display = user ? "none" : "block";
+  document.getElementById("app").style.display = user ? "block" : "none";
+});
 </script>
 
-<!-- Google Maps -->
+<!-- GOOGLE MAP -->
 <script async defer
 src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCh56XNMWu9ZZATyj-7-oEyn1Wk_K4yTlY&libraries=places&callback=initMap">
 </script>
@@ -96,7 +101,7 @@ src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCh56XNMWu9ZZATyj-7-oEyn1W
 <script>
 let map;
 
-// MAP LOAD
+// MAP
 function initMap() {
   const loc = { lat: 7.8731, lng: 80.7718 };
 
@@ -108,57 +113,62 @@ function initMap() {
 
 // LOGIN
 function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  auth.signInWithEmailAndPassword(email, password)
-    .then(() => {
-      document.getElementById("auth-box").style.display = "none";
-      document.getElementById("app").style.display = "block";
-    })
-    .catch(err => alert(err.message));
+  auth.signInWithEmailAndPassword(email.value, password.value)
+    .catch(err => showError(err.message));
 }
 
 // SIGNUP
 function signup() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  auth.createUserWithEmailAndPassword(email, password)
-    .then(() => alert("Signup success"))
-    .catch(err => alert(err.message));
+  auth.createUserWithEmailAndPassword(email.value, password.value)
+    .then(() => showError("Signup success ✅"))
+    .catch(err => showError(err.message));
 }
 
 // LOGOUT
 function logout() {
-  auth.signOut().then(() => location.reload());
+  auth.signOut();
 }
 
-// SIMPLE FEATURES
+// PLAN
 function planTrip() {
-  const start = document.getElementById("start").value;
-  const dest = document.getElementById("destination").value;
-  const days = document.getElementById("days").value;
+  if (!destination.value || !days.value) {
+    return showError("Enter details!");
+  }
 
-  document.getElementById("result").innerHTML =
-    `<h3>Trip: ${start} → ${dest}</h3><p>Days: ${days}</p>`;
+  result.innerHTML = `
+    <div class="card">
+      <h2>${destination.value}</h2>
+      <p>📅 ${startDate.value}</p>
+      <p>⏳ ${days.value} days</p>
+    </div>
+  `;
 }
 
+// CLEAR
 function clearTrips() {
-  document.getElementById("result").innerHTML = "";
+  result.innerHTML = "";
 }
 
+// THEME FIXED
 function toggleTheme() {
-  document.body.classList.toggle("dark");
+  document.body.classList.toggle("light-mode");
 }
 
+// MUSIC
 function toggleMusic() {
-  const music = document.getElementById("bg-music");
-  music.paused ? music.play() : music.pause();
+  bgMusic = document.getElementById("bg-music");
+  bgMusic.paused ? bgMusic.play() : bgMusic.pause();
 }
 
+// PDF
 function downloadPDF() {
   html2pdf().from(document.body).save("travel-plan.pdf");
+}
+
+// ERROR
+function showError(msg) {
+  error.innerText = msg;
+  setTimeout(() => error.innerText = "", 3000);
 }
 </script>
 
