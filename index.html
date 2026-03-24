@@ -5,196 +5,84 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🌍 Travel Planner</title>
 
-<style>
-body {
-  font-family: Arial;
-  background: #0f172a;
-  color: white;
-  text-align: center;
-  padding: 20px;
-}
+<link rel="stylesheet" href="style.css">
 
-input, button {
-  padding: 10px;
-  margin: 5px;
-  border-radius: 8px;
-  border: none;
-}
+<!-- PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
 
-button {
-  background: #0072ff;
-  color: white;
-  cursor: pointer;
-}
-
-#result {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px,1fr));
-  gap: 15px;
-  margin-top: 20px;
-}
-
-.card {
-  background: #1e293b;
-  padding: 15px;
-  border-radius: 10px;
-}
-
-.card img {
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 10px;
-  margin-bottom: 10px;
-}
-
-#map {
-  height: 300px;
-  margin-top: 20px;
-}
-</style>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 </head>
 
 <body>
 
 <h1>🌍 Travel Planner</h1>
 
-<input id="destination" placeholder="Enter destination">
-<input id="days" type="number" placeholder="Days">
+<!-- LOGIN -->
+<div id="auth-box">
+  <input id="email" placeholder="Email"><br>
+  <input id="password" placeholder="Password"><br>
+  <button onclick="login()">Login</button>
+  <button onclick="signup()">Signup</button>
+</div>
 
-<br>
+<!-- APP -->
+<div id="app" style="display:none;">
 
-<button onclick="planTrip()">Plan</button>
-<button onclick="getSuggestion()">🤖 AI</button>
-<button onclick="downloadPDF()">📄 PDF</button>
+<div class="search-box">
+  <input id="start" placeholder="Start">
+  <input id="destination" placeholder="Destination">
+  <input id="days" type="number" placeholder="Days">
+  <input id="startDate" type="date">
+</div>
+
+<div class="buttons">
+  <button onclick="planTrip()">Plan</button>
+  <button onclick="clearTrips()">Clear</button>
+  <button onclick="toggleTheme()">Theme</button>
+  <button onclick="toggleMusic()">Music</button>
+  <button onclick="getSuggestion()">AI</button>
+  <button onclick="showRoute()">Route</button>
+  <button onclick="findPlaces('restaurant')">Food</button>
+  <button onclick="findPlaces('lodging')">Hotels</button>
+  <button onclick="downloadPDF()">PDF</button>
+  <button onclick="logout()">Logout</button>
+</div>
 
 <p id="error"></p>
+<h3 id="tripCount"></h3>
 
 <div id="aiResult"></div>
 <div id="result"></div>
-
 <div id="map"></div>
 
-<!-- PDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+</div>
 
-<!-- GOOGLE MAP -->
-<script async defer
-src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCh56XNMWu9ZZATyj-7-oEyn1Wk_K4yTlY&callback=initMap">
-</script>
+<audio id="bg-music" loop>
+<source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">
+</audio>
 
+<!-- Firebase Config -->
 <script>
-// 🔑 KEYS
-const WEATHER_API = "0c2d1ffade57eaa1ad12b6c3eb3f5f82";
-const UNSPLASH_KEY = "ok8kLwCbK6NEj3MkXKe_YSzNgh_kDZXoApEif2pYyKY";
+const firebaseConfig = {
+  apiKey: "AIzaSyB_DNA69gwDLbHIUqYxMqC5h85uiqYzrfs",
+  authDomain: "travel---planner.firebaseapp.com",
+  projectId: "travel---planner",
+};
 
-let map, marker;
-
-// MAP
-function initMap() {
-  let loc = {lat:7.8731, lng:80.7718};
-
-  map = new google.maps.Map(document.getElementById("map"), {
-    zoom: 7,
-    center: loc
-  });
-
-  marker = new google.maps.Marker({
-    position: loc,
-    map: map
-  });
-}
-
-// PLAN
-async function planTrip() {
-  let city = document.getElementById("destination").value;
-  let days = document.getElementById("days").value;
-
-  if (!city) return showError("Enter destination!");
-
-  let img = await getImage(city);
-  let hotel = await getHotelImage(city);
-  let weather = await getWeather(city);
-
-  document.getElementById("result").innerHTML += `
-  <div class="card">
-    <img src="${img}">
-    <h2>${city}</h2>
-
-    <img src="${hotel}">
-    <p>🏨 Hotel</p>
-
-    <p>${weather}</p>
-    <p>Days: ${days}</p>
-
-    <button onclick="showLocation('${city}')">📍 Map</button>
-  </div>`;
-}
-
-// IMAGE
-async function getImage(city) {
-  let res = await fetch(`https://api.unsplash.com/search/photos?query=${city}&client_id=${UNSPLASH_KEY}`);
-  let data = await res.json();
-  return data.results[0]?.urls.small;
-}
-
-// HOTEL IMAGE
-async function getHotelImage(city) {
-  let res = await fetch(`https://api.unsplash.com/search/photos?query=${city}+hotel&client_id=${UNSPLASH_KEY}`);
-  let data = await res.json();
-  return data.results[0]?.urls.small;
-}
-
-// WEATHER
-async function getWeather(city) {
-  let res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${WEATHER_API}&units=metric`);
-  let data = await res.json();
-
-  return `🌡️ ${data.main.temp}°C`;
-}
-
-// MAP SHOW
-async function showLocation(city) {
-  let res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${WEATHER_API}`);
-  let data = await res.json();
-
-  let pos = {
-    lat: data.coord.lat,
-    lng: data.coord.lon
-  };
-
-  map.setCenter(pos);
-  map.setZoom(10);
-  marker.setPosition(pos);
-}
-
-// AI (simple)
-function getSuggestion() {
-  let city = document.getElementById("destination").value;
-  let days = document.getElementById("days").value || 3;
-
-  let text = "";
-
-  for (let i=1; i<=days; i++) {
-    text += `Day ${i}: Explore ${city}<br>`;
-  }
-
-  document.getElementById("aiResult").innerHTML =
-    `<h3>🤖 Plan</h3>${text}`;
-}
-
-// PDF
-function downloadPDF() {
-  let el = document.body;
-
-  html2pdf().from(el).save("travel.pdf");
-}
-
-// ERROR
-function showError(msg) {
-  document.getElementById("error").innerText = msg;
-}
+firebase.initializeApp(firebaseConfig);
+window.auth = firebase.auth();
+window.db = firebase.firestore();
 </script>
+
+<!-- Google Map -->
+<script async defer
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCh56XNMWu9ZZATyj-7-oEyn1Wk_K4yTlY&libraries=places&callback=initMap">
+</script>
+
+<script src="script.js"></script>
 
 </body>
 </html>
