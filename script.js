@@ -5,6 +5,8 @@ const WEATHER_API = "0c2d1ffade57eaa1ad12b6c3eb3f5f82";
 // 🤖 Gemini API
 const GEMINI_API = "AIzaSyAQzfVBDL8wEIJ9i4pxTPqdU0Hfu9zZ0E4";
 
+const UNSPLASH_KEY = "ok8kLwCbK6NEj3MkXKe_YSzNgh_kDZXoApEif2pYyKY";
+
 let map, marker, directionsService, directionsRenderer;
 
 // ================= MAP =================
