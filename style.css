@@ -151,7 +151,7 @@ button:active {
 /* RESULT GRID */
 #result {
   margin-top: 25px;
-  margin-bottom: 40px; /* 🔥 FIX: map overlap prevent */
+  margin-bottom: 40px;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 20px;
@@ -201,22 +201,48 @@ button:active {
   color: #e2e8f0;
 }
 
-/* CARD BUTTONS */
+/* DELETE BUTTON */
 .card button {
-  width: 48%;
+  width: 100%;
   margin-top: 10px;
 }
 
-/* DELETE BUTTON */
 .card button:last-child {
   background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+/* 🤖 AI RESULT BOX */
+#aiResult {
+  display: none;
+  margin-top: 25px;
+  padding: 20px;
+  border-radius: 20px;
+
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(15px);
+
+  box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+
+  text-align: left;
+  animation: fadeIn 0.5s ease;
+}
+
+#aiResult h3 {
+  color: #38bdf8;
+  margin-bottom: 10px;
+}
+
+#aiResult p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #e2e8f0;
 }
 
 /* 🌍 MAP */
 #map {
   height: 400px;
   width: 100%;
-  margin-top: 50px; /* 🔥 FIX: space */
+  margin-top: 50px;
   border-radius: 20px;
   overflow: hidden;
   border: 2px solid rgba(255,255,255,0.2);
@@ -250,10 +276,6 @@ button:active {
   color: #111;
 }
 
-.light-mode .card h2 {
-  color: #0072ff;
-}
-
 .light-mode .card p {
   color: #333;
 }
@@ -263,17 +285,17 @@ button:active {
   color: #111;
 }
 
-.light-mode input::placeholder {
-  color: #555;
-}
-
 .light-mode #result {
   background: rgba(255,255,255,0.6);
 }
 
+.light-mode #aiResult {
+  background: rgba(255,255,255,0.9);
+  color: #111;
+}
+
 /* 📱 MOBILE */
 @media (max-width: 768px) {
-
   body {
     padding: 20px;
   }
@@ -295,4 +317,15 @@ button:active {
 @keyframes fadePage {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
