@@ -94,7 +94,9 @@ window.toggleMusic = function () {
     if (!music) return;
 
     if (music.paused) {
-        music.play();
+        music.play().catch(() => {
+            alert("Tap again to enable music 🎵");
+        });
     } else {
         music.pause();
     }
@@ -134,6 +136,33 @@ window.getCurrentLocation = function () {
             `${loc.lat}, ${loc.lng}`;
 
     }, () => showError("Location denied ❌"));
+};
+
+// ================= SHOW LOCATION (🔥 NEW) =================
+window.showLocation = async function (city) {
+    if (!city) return showError("Enter destination!");
+
+    try {
+        let res = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${WEATHER_API}`
+        );
+
+        let data = await res.json();
+
+        if (!data.coord) return showError("Location not found!");
+
+        let pos = {
+            lat: data.coord.lat,
+            lng: data.coord.lon
+        };
+
+        map.setCenter(pos);
+        map.setZoom(12);
+        marker.setPosition(pos);
+
+    } catch {
+        showError("Map error ❌");
+    }
 };
 
 // ================= ROUTE =================
@@ -229,6 +258,11 @@ async function displayTrips() {
     resultDiv.innerHTML = "";
     countDiv.innerHTML = `Total Trips: ${snapshot.size}`;
 
+    if (snapshot.empty) {
+        resultDiv.innerHTML = "<p>No trips yet 😢</p>";
+        return;
+    }
+
     for (const doc of snapshot.docs) {
         let t = doc.data();
         let weather = await getWeather(t.destination);
@@ -237,12 +271,13 @@ async function displayTrips() {
         resultDiv.innerHTML += `
         <div class="card">
             <h2>${t.destination}</h2>
-            <p>Start: ${t.startDate}</p>
-            <p>End: ${endDate}</p>
+            <p>📅 Start: ${t.startDate}</p>
+            <p>🏁 End: ${endDate}</p>
             <p>${weather}</p>
-            <p>Days: ${t.days}</p>
+            <p>⏳ Days: ${t.days}</p>
 
-            <button onclick="deleteTrip('${doc.id}')">Delete</button>
+            <button onclick="showLocation('${t.destination}')">📍 Map</button>
+            <button onclick="deleteTrip('${doc.id}')">❌ Delete</button>
         </div>`;
     }
 }
