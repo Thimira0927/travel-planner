@@ -1,3 +1,4 @@
+// API KEYS
 const WEATHER_API = "0c2d1ffade57eaa1ad12b6c3eb3f5f82";
 const GEMINI_API = "AIzaSyAQzfVBDL8wEIJ9i4pxTPqdU0Hfu9zZ0E4";
 
@@ -6,7 +7,7 @@ const db = window.db;
 
 let map, marker, directionsService, directionsRenderer, placeMarkers = [];
 
-// MAP
+// ================= MAP =================
 window.initMap = function () {
     const loc = { lat: 7.8731, lng: 80.7718 };
 
@@ -25,13 +26,14 @@ window.initMap = function () {
     new google.maps.places.Autocomplete(document.getElementById("destination"));
 };
 
-// AUTH
+// ================= AUTH =================
 window.login = () => {
     const emailVal = document.getElementById("email").value;
     const passVal = document.getElementById("password").value;
 
     auth.signInWithEmailAndPassword(emailVal, passVal)
-        .catch(e => alert(e.message));
+        .then(() => displayTrips())
+        .catch(e => showError(e.message));
 };
 
 window.signup = () => {
@@ -39,31 +41,43 @@ window.signup = () => {
     const passVal = document.getElementById("password").value;
 
     auth.createUserWithEmailAndPassword(emailVal, passVal)
-        .catch(e => alert(e.message));
+        .then(() => showError("Signup success ✅"))
+        .catch(e => showError(e.message));
 };
 
 window.logout = () => auth.signOut();
 
-// PLAN
+// ================= PLAN =================
 window.planTrip = async () => {
-    let dest = document.getElementById("destination").value;
+    let dest = document.getElementById("destination").value.trim();
     let dayCount = document.getElementById("days").value;
     let startDate = document.getElementById("startDate").value;
 
+    if (!dest || !dayCount) {
+        return showError("Enter destination & days!");
+    }
+
     let user = auth.currentUser;
-    if (!user) return alert("Login first");
+    if (!user) return showError("Login first!");
 
-    await db.collection("trips").add({
-        userId: user.uid,
-        destination: dest,
-        days: dayCount,
-        startDate
-    });
+    try {
+        await db.collection("trips").add({
+            userId: user.uid,
+            destination: dest,
+            days: Number(dayCount),
+            startDate
+        });
 
-    displayTrips();
+        showError("Trip added ✅");
+        displayTrips();
+
+    } catch (err) {
+        showError("Save failed ❌");
+        console.error(err);
+    }
 };
 
-// DISPLAY
+// ================= DISPLAY =================
 async function displayTrips() {
     let user = auth.currentUser;
     if (!user) return;
@@ -71,47 +85,81 @@ async function displayTrips() {
     const resultDiv = document.getElementById("result");
     const countDiv = document.getElementById("tripCount");
 
-    let snap = await db.collection("trips")
-        .where("userId", "==", user.uid)
-        .get();
+    try {
+        let snap = await db.collection("trips")
+            .where("userId", "==", user.uid)
+            .get();
 
-    resultDiv.innerHTML = "";
-    countDiv.innerText = "Trips: " + snap.size;
+        resultDiv.innerHTML = "";
+        countDiv.innerText = "Trips: " + snap.size;
 
-    snap.forEach(doc => {
-        let t = doc.data();
-        resultDiv.innerHTML += `
-        <div class="card">
-        <h3>${t.destination}</h3>
-        <p>${t.startDate} (${t.days} days)</p>
-        <button onclick="deleteTrip('${doc.id}')">Delete</button>
-        </div>`;
-    });
+        if (snap.empty) {
+            resultDiv.innerHTML = "<p>No trips yet 😢</p>";
+            return;
+        }
+
+        snap.forEach(doc => {
+            let t = doc.data();
+
+            resultDiv.innerHTML += `
+            <div class="card">
+                <h3>${t.destination}</h3>
+                <p>📅 ${t.startDate || "Not set"}</p>
+                <p>⏳ ${t.days} days</p>
+                <button onclick="showLocation('${t.destination}')">📍 Map</button>
+                <button onclick="deleteTrip('${doc.id}')">❌ Delete</button>
+            </div>`;
+        });
+
+    } catch (err) {
+        console.error(err);
+        showError("Load failed ❌");
+    }
 }
 
-// DELETE
-window.deleteTrip = id =>
-    db.collection("trips").doc(id).delete().then(displayTrips);
+// ================= DELETE =================
+window.deleteTrip = id => {
+    if (!confirm("Delete this trip?")) return;
 
-// ROUTE
+    db.collection("trips").doc(id).delete()
+        .then(displayTrips)
+        .catch(() => showError("Delete failed ❌"));
+};
+
+// ================= ROUTE =================
 window.showRoute = () => {
+    let start = document.getElementById("start").value;
+    let dest = document.getElementById("destination").value;
+
+    if (!start || !dest) {
+        return showError("Enter start & destination!");
+    }
+
     directionsService.route({
-        origin: document.getElementById("start").value,
-        destination: document.getElementById("destination").value,
+        origin: start,
+        destination: dest,
         travelMode: "DRIVING"
     }, (res, status) => {
+
         if (status === "OK") {
             directionsRenderer.setDirections(res);
+        } else {
+            showError("Route not found ❌");
         }
     });
 };
 
-// PLACES
+// ================= PLACES =================
 window.findPlaces = type => {
+
+    if (!map) return;
+
     placeMarkers.forEach(m => m.setMap(null));
     placeMarkers = [];
 
-    new google.maps.places.PlacesService(map).nearbySearch({
+    const service = new google.maps.places.PlacesService(map);
+
+    service.nearbySearch({
         location: map.getCenter(),
         radius: 2000,
         type: [type]
@@ -122,52 +170,121 @@ window.findPlaces = type => {
         res.forEach(p => {
             let m = new google.maps.Marker({
                 map,
-                position: p.geometry.location
+                position: p.geometry.location,
+                title: p.name
             });
             placeMarkers.push(m);
         });
     });
 };
 
-// LOCATION
+// ================= LOCATION =================
 window.getCurrentLocation = () => {
     navigator.geolocation.getCurrentPosition(pos => {
         let loc = {
             lat: pos.coords.latitude,
             lng: pos.coords.longitude
         };
+
         map.setCenter(loc);
+        map.setZoom(14);
         marker.setPosition(loc);
-    });
+
+    }, () => showError("Location denied ❌"));
 };
 
-// AI
+// ================= SHOW LOCATION =================
+window.showLocation = async (city) => {
+    if (!city) return;
+
+    try {
+        let res = await fetch(
+            `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${WEATHER_API}`
+        );
+
+        let data = await res.json();
+
+        if (!data.coord) return showError("Location not found!");
+
+        let pos = {
+            lat: data.coord.lat,
+            lng: data.coord.lon
+        };
+
+        map.setCenter(pos);
+        map.setZoom(12);
+        marker.setPosition(pos);
+
+    } catch {
+        showError("Map error ❌");
+    }
+};
+
+// ================= AI =================
 window.getSuggestion = async () => {
     const aiBox = document.getElementById("aiResult");
+
     aiBox.style.display = "block";
-    aiBox.innerHTML = "Loading...";
+    aiBox.innerHTML = "🤖 Generating...";
 
-    let res = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API}`,
-        {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: `Plan trip to ${document.getElementById("destination").value}` }] }]
-            })
-        }
-    );
+    try {
+        let res = await fetch(
+            `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API}`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: `Plan trip to ${document.getElementById("destination").value}`
+                        }]
+                    }]
+                })
+            }
+        );
 
-    let data = await res.json();
-    let text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No AI result";
+        let data = await res.json();
+        let text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    aiBox.innerHTML = text.replace(/\n/g, "<br>");
+        if (!text) text = "No AI response 😢";
+
+        aiBox.innerHTML = text.replace(/\n/g, "<br>");
+
+    } catch {
+        aiBox.innerHTML = "AI error ❌";
+    }
 };
 
-// PDF
+// ================= PDF =================
 window.downloadPDF = () =>
     html2pdf().from(document.body).save("plan.pdf");
 
-// CLEAR
-window.clearTrips = () =>
-    document.getElementById("result").innerHTML = "";
+// ================= CLEAR =================
+window.clearTrips = async () => {
+    let user = auth.currentUser;
+    if (!user) return;
+
+    if (!confirm("Clear all trips?")) return;
+
+    let snap = await db.collection("trips")
+        .where("userId", "==", user.uid)
+        .get();
+
+    let batch = db.batch();
+    snap.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+
+    displayTrips();
+};
+
+// ================= ERROR =================
+function showError(msg) {
+    const e = document.getElementById("error");
+    e.innerText = msg;
+    setTimeout(() => e.innerText = "", 4000);
+}
+
+// ================= AUTO LOAD =================
+auth.onAuthStateChanged(user => {
+    if (user) displayTrips();
+});
