@@ -1,6 +1,5 @@
 // ================= API KEYS =================
 const WEATHER_API = "0c2d1ffade57eaa1ad12b6c3eb3f5f82";
-const GEMINI_API = "AIzaSyAQzfVBDL8wEIJ9i4pxTPqdU0Hfu9zZ0E4";
 
 // ================= FIREBASE =================
 const auth = window.auth;
@@ -11,7 +10,6 @@ let map = null;
 let marker = null;
 let directionsService = null;
 let directionsRenderer = null;
-let placeMarkers = [];
 let watchId = null;
 let musicPlaying = false;
 
@@ -24,15 +22,10 @@ window.initMap = function () {
         center: loc
     });
 
-    marker = new google.maps.Marker({
-        position: loc,
-        map: map
-    });
+    marker = new google.maps.Marker({ position: loc, map });
 
     directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer({
-        suppressMarkers: false
-    });
+    directionsRenderer = new google.maps.DirectionsRenderer();
     directionsRenderer.setMap(map);
 
     const startInput = document.getElementById("start");
@@ -40,17 +33,12 @@ window.initMap = function () {
 
     if (startInput) new google.maps.places.Autocomplete(startInput);
     if (destInput) new google.maps.places.Autocomplete(destInput);
-
-    // 🔥 FIX: map render issue
-    google.maps.event.addListenerOnce(map, 'idle', function () {
-        google.maps.event.trigger(map, 'resize');
-    });
 };
 
 // ================= AUTH =================
 window.login = () => {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
+    const email = emailVal();
+    const password = passVal();
 
     if (!email || !password) return showError("Enter email & password!");
 
@@ -60,8 +48,8 @@ window.login = () => {
 };
 
 window.signup = () => {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
+    const email = emailVal();
+    const password = passVal();
 
     if (!email || !password) return showError("Enter email & password!");
 
@@ -72,7 +60,10 @@ window.signup = () => {
 
 window.logout = () => auth.signOut();
 
-// ================= PLAN TRIP =================
+const emailVal = () => document.getElementById("email").value.trim();
+const passVal = () => document.getElementById("password").value.trim();
+
+// ================= PLAN =================
 window.planTrip = async () => {
     const dest = document.getElementById("destination").value.trim();
     const days = document.getElementById("days").value;
@@ -83,21 +74,15 @@ window.planTrip = async () => {
     const user = auth.currentUser;
     if (!user) return showError("Login first!");
 
-    try {
-        await db.collection("trips").add({
-            userId: user.uid,
-            destination: dest,
-            days: Number(days),
-            startDate
-        });
+    await db.collection("trips").add({
+        userId: user.uid,
+        destination: dest,
+        days: Number(days),
+        startDate
+    });
 
-        showError("Trip added ✅");
-        displayTrips();
-
-    } catch (err) {
-        console.error(err);
-        showError("Save failed ❌");
-    }
+    showError("Trip added ✅");
+    displayTrips();
 };
 
 // ================= DISPLAY =================
@@ -105,141 +90,92 @@ async function displayTrips() {
     const user = auth.currentUser;
     if (!user) return;
 
+    const snap = await db.collection("trips")
+        .where("userId", "==", user.uid)
+        .get();
+
     const resultDiv = document.getElementById("result");
     const countDiv = document.getElementById("tripCount");
 
-    try {
-        const snap = await db.collection("trips")
-            .where("userId", "==", user.uid)
-            .get();
+    resultDiv.innerHTML = "";
+    countDiv.innerText = "Trips: " + snap.size;
 
-        resultDiv.innerHTML = "";
-        countDiv.innerText = "Trips: " + snap.size;
+    snap.forEach(doc => {
+        const t = doc.data();
 
-        if (snap.empty) {
-            resultDiv.innerHTML = "<p>No trips yet 😢</p>";
-            return;
-        }
+        resultDiv.innerHTML += `
+        <div class="card">
+            <h3>${t.destination}</h3>
+            <p>📅 ${t.startDate || "Not set"}</p>
+            <p>⏳ ${t.days} days</p>
 
-        snap.forEach(doc => {
-            const t = doc.data();
-
-            resultDiv.innerHTML += `
-            <div class="card">
-                <div class="gallery">
-                    <img src="https://picsum.photos/400/200?random=${Math.random()}">
-                    <img src="https://picsum.photos/400/200?random=${Math.random()}">
-                    <img src="https://picsum.photos/400/200?random=${Math.random()}">
-                </div>
-
-                <h3>${t.destination}</h3>
-                <p>📅 ${t.startDate || "Not set"}</p>
-                <p>⏳ ${t.days} days</p>
-
-                <button onclick="showLocation('${t.destination}')">📍 Map</button>
-                <button onclick="showRouteTo('${t.destination}')">🧭 Route</button>
-                <button onclick="deleteTrip('${doc.id}')">❌ Delete</button>
-            </div>`;
-        });
-
-    } catch (err) {
-        console.error(err);
-        showError("Load failed ❌");
-    }
+            <button onclick="showLocation('${t.destination}')">📍 Map</button>
+            <button onclick="showRouteTo('${t.destination}')">🧭 Route</button>
+            <button onclick="deleteTrip('${doc.id}')">❌ Delete</button>
+        </div>`;
+    });
 }
 
 // ================= DELETE =================
 window.deleteTrip = id => {
-    if (!confirm("Delete this trip?")) return;
-
-    db.collection("trips").doc(id).delete()
-        .then(displayTrips)
-        .catch(() => showError("Delete failed ❌"));
+    db.collection("trips").doc(id).delete().then(displayTrips);
 };
 
 // ================= ROUTE =================
-window.showRoute = () => {
-    const start = document.getElementById("start").value;
-    const dest = document.getElementById("destination").value;
-
-    if (!start || !dest) return showError("Enter start & destination!");
-    drawRoute(start, dest);
-};
-
 window.showRouteTo = (dest) => {
     const start = document.getElementById("start").value;
-    if (!start) return showError("Enter start location!");
-    drawRoute(start, dest);
-};
-
-function drawRoute(startLoc, destLoc) {
-    if (!directionsService || !directionsRenderer) return;
-
-    directionsRenderer.setDirections({ routes: [] });
+    if (!start) return showError("Enter start!");
 
     directionsService.route({
-        origin: startLoc,
-        destination: destLoc,
-        travelMode: google.maps.TravelMode.DRIVING
+        origin: start,
+        destination: dest,
+        travelMode: "DRIVING"
     }, (res, status) => {
         if (status === "OK") {
             directionsRenderer.setDirections(res);
-        } else {
-            showError("Route not found ❌");
         }
     });
-}
-
-// ================= 🔥 SHOW LOCATION (FIXED) =================
-window.showLocation = async (city) => {
-    if (!map || !marker) return showError("Map not ready ❌");
-
-    try {
-        const res = await fetch(
-            `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${WEATHER_API}`
-        );
-
-        const data = await res.json();
-
-        if (!data.coord) return showError("Location not found ❌");
-
-        const pos = {
-            lat: data.coord.lat,
-            lng: data.coord.lon
-        };
-
-        map.setCenter(pos);
-        map.setZoom(12);
-        marker.setPosition(pos);
-
-        // clear route
-        directionsRenderer.setDirections({ routes: [] });
-
-        document.getElementById("weatherBox").innerHTML = `
-            <div class="card">
-                <h3>🌦️ ${city}</h3>
-                <p>🌡️ ${data.main.temp}°C</p>
-                <p>☁️ ${data.weather[0].description}</p>
-            </div>
-        `;
-
-    } catch (err) {
-        console.error(err);
-        showError("Weather error ❌");
-    }
 };
 
-// ================= LIVE LOCATION =================
+// ================= 🔥 FIXED MAP =================
+window.showLocation = (city) => {
+    if (!map) return showError("Map not ready ❌");
+
+    const geocoder = new google.maps.Geocoder();
+
+    geocoder.geocode({ address: city }, (results, status) => {
+        if (status === "OK") {
+
+            const loc = results[0].geometry.location;
+
+            map.setCenter(loc);
+            map.setZoom(12);
+            marker.setPosition(loc);
+
+            // clear route
+            directionsRenderer.setDirections({ routes: [] });
+
+            // optional weather
+            fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${WEATHER_API}`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("weatherBox").innerHTML = `
+                        <div class="card">
+                            <h3>🌦️ ${city}</h3>
+                            <p>🌡️ ${data.main?.temp || "-"}°C</p>
+                        </div>
+                    `;
+                });
+
+        } else {
+            showError("Location not found ❌");
+        }
+    });
+};
+
+// ================= LOCATION =================
 window.getCurrentLocation = () => {
-    if (!navigator.geolocation) return showError("Not supported");
-
-    if (watchId) {
-        navigator.geolocation.clearWatch(watchId);
-        watchId = null;
-        return showError("Tracking stopped ❌");
-    }
-
-    watchId = navigator.geolocation.watchPosition(pos => {
+    navigator.geolocation.getCurrentPosition(pos => {
         const loc = {
             lat: pos.coords.latitude,
             lng: pos.coords.longitude
@@ -248,40 +184,25 @@ window.getCurrentLocation = () => {
         map.setCenter(loc);
         map.setZoom(15);
         marker.setPosition(loc);
-
-    }, () => showError("Location denied ❌"));
-
-    showError("Tracking started 📍");
-};
-
-// ================= MUSIC =================
-window.toggleMusic = () => {
-    const music = document.getElementById("bg-music");
-
-    if (!musicPlaying) {
-        music.play().catch(() => showError("Click again 🎵"));
-        musicPlaying = true;
-    } else {
-        music.pause();
-        musicPlaying = false;
-    }
+    });
 };
 
 // ================= THEME =================
 window.toggleTheme = () => {
     document.body.classList.toggle("light-mode");
-
-    localStorage.setItem(
-        "theme",
-        document.body.classList.contains("light-mode") ? "light" : "dark"
-    );
 };
 
-// ================= LOAD =================
-window.onload = () => {
-    if (localStorage.getItem("theme") === "light") {
-        document.body.classList.add("light-mode");
+// ================= MUSIC =================
+window.toggleMusic = () => {
+    const m = document.getElementById("bg-music");
+
+    if (!musicPlaying) {
+        m.play();
+    } else {
+        m.pause();
     }
+
+    musicPlaying = !musicPlaying;
 };
 
 // ================= ERROR =================
