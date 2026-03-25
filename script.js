@@ -12,6 +12,8 @@ let marker = null;
 let directionsService = null;
 let directionsRenderer = null;
 let placeMarkers = [];
+let watchId = null;
+let musicPlaying = false;
 
 // ================= MAP =================
 window.initMap = function () {
@@ -43,14 +45,10 @@ window.login = () => {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value.trim();
 
-    if (!email || !password) {
-        return showError("Enter email & password!");
-    }
+    if (!email || !password) return showError("Enter email & password!");
 
     auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-            showError("Login success ✅");
-        })
+        .then(() => showError("Login success ✅"))
         .catch(e => showError(e.message));
 };
 
@@ -58,9 +56,7 @@ window.signup = () => {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value.trim();
 
-    if (!email || !password) {
-        return showError("Enter email & password!");
-    }
+    if (!email || !password) return showError("Enter email & password!");
 
     auth.createUserWithEmailAndPassword(email, password)
         .then(() => showError("Signup success ✅"))
@@ -207,10 +203,7 @@ window.findPlaces = (type) => {
         type: [type]
     }, (results, status) => {
 
-        if (status !== "OK") {
-            showError("No places found ❌");
-            return;
-        }
+        if (status !== "OK") return showError("No places found ❌");
 
         results.forEach(place => {
             const m = new google.maps.Marker({
@@ -224,21 +217,29 @@ window.findPlaces = (type) => {
     });
 };
 
-// ================= LOCATION =================
+// ================= LIVE LOCATION =================
 window.getCurrentLocation = () => {
     if (!navigator.geolocation) return showError("Not supported");
 
-    navigator.geolocation.getCurrentPosition(pos => {
+    if (watchId) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+        return showError("Tracking stopped ❌");
+    }
+
+    watchId = navigator.geolocation.watchPosition(pos => {
         const loc = {
             lat: pos.coords.latitude,
             lng: pos.coords.longitude
         };
 
         map.setCenter(loc);
-        map.setZoom(14);
+        map.setZoom(15);
         marker.setPosition(loc);
 
     }, () => showError("Location denied ❌"));
+
+    showError("Tracking started 📍");
 };
 
 // ================= WEATHER =================
@@ -326,6 +327,30 @@ window.calculateCost = () => {
     `;
 };
 
+// ================= MUSIC =================
+window.toggleMusic = () => {
+    const music = document.getElementById("bg-music");
+
+    if (!musicPlaying) {
+        music.play();
+        musicPlaying = true;
+    } else {
+        music.pause();
+        musicPlaying = false;
+    }
+};
+
+// ================= DARK MODE =================
+window.toggleTheme = () => {
+    document.body.classList.toggle("dark");
+
+    if (document.body.classList.contains("dark")) {
+        localStorage.setItem("theme", "dark");
+    } else {
+        localStorage.setItem("theme", "light");
+    }
+};
+
 // ================= PDF =================
 window.downloadPDF = () =>
     html2pdf().from(document.body).save("travel-plan.pdf");
@@ -357,3 +382,10 @@ auth.onAuthStateChanged(user => {
         appBox.style.display = "none";
     }
 });
+
+// ================= LOAD THEME =================
+window.onload = () => {
+    if (localStorage.getItem("theme") === "dark") {
+        document.body.classList.add("dark");
+    }
+};
