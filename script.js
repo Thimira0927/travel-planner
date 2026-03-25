@@ -22,7 +22,10 @@ window.initMap = function () {
         center: loc
     });
 
-    marker = new google.maps.Marker({ position: loc, map });
+    marker = new google.maps.Marker({
+        position: loc,
+        map: map
+    });
 
     directionsService = new google.maps.DirectionsService();
     directionsRenderer = new google.maps.DirectionsRenderer();
@@ -122,9 +125,9 @@ async function displayTrips() {
             <div class="card">
 
                 <div class="gallery">
-                    <img src="https://source.unsplash.com/400x200/?${t.destination}">
-                    <img src="https://source.unsplash.com/400x200/?${t.destination},travel">
-                    <img src="https://source.unsplash.com/400x200/?${t.destination},city">
+                    <img src="https://source.unsplash.com/400x200/?${t.destination}&sig=1">
+                    <img src="https://source.unsplash.com/400x200/?${t.destination},travel&sig=2">
+                    <img src="https://source.unsplash.com/400x200/?${t.destination},city&sig=3">
                 </div>
 
                 <h3>${t.destination}</h3>
@@ -340,14 +343,17 @@ function showError(msg) {
     setTimeout(() => e.innerText = "", 3000);
 }
 
-// ================= AUTO LOAD =================
+// ================= AUTH STATE =================
 auth.onAuthStateChanged(user => {
+    const authBox = document.getElementById("auth-box");
+    const appBox = document.getElementById("app");
+
     if (user) {
+        authBox.style.display = "none";
+        appBox.style.display = "block";
         displayTrips();
-        document.getElementById("auth-box").style.display = "none";
-        document.getElementById("app").style.display = "block";
     } else {
-        document.getElementById("auth-box").style.display = "block";
-        document.getElementById("app").style.display = "none";
+        authBox.style.display = "block";
+        appBox.style.display = "none";
     }
 });
