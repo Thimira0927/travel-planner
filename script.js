@@ -40,6 +40,11 @@ window.initMap = function () {
 
     if (startInput) new google.maps.places.Autocomplete(startInput);
     if (destInput) new google.maps.places.Autocomplete(destInput);
+
+    // 🔥 FIX: map render issue
+    google.maps.event.addListenerOnce(map, 'idle', function () {
+        google.maps.event.trigger(map, 'resize');
+    });
 };
 
 // ================= AUTH =================
@@ -170,7 +175,6 @@ window.showRouteTo = (dest) => {
 function drawRoute(startLoc, destLoc) {
     if (!directionsService || !directionsRenderer) return;
 
-    // 🔥 clear old route
     directionsRenderer.setDirections({ routes: [] });
 
     directionsService.route({
@@ -185,6 +189,45 @@ function drawRoute(startLoc, destLoc) {
         }
     });
 }
+
+// ================= 🔥 SHOW LOCATION (FIXED) =================
+window.showLocation = async (city) => {
+    if (!map || !marker) return showError("Map not ready ❌");
+
+    try {
+        const res = await fetch(
+            `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${WEATHER_API}`
+        );
+
+        const data = await res.json();
+
+        if (!data.coord) return showError("Location not found ❌");
+
+        const pos = {
+            lat: data.coord.lat,
+            lng: data.coord.lon
+        };
+
+        map.setCenter(pos);
+        map.setZoom(12);
+        marker.setPosition(pos);
+
+        // clear route
+        directionsRenderer.setDirections({ routes: [] });
+
+        document.getElementById("weatherBox").innerHTML = `
+            <div class="card">
+                <h3>🌦️ ${city}</h3>
+                <p>🌡️ ${data.main.temp}°C</p>
+                <p>☁️ ${data.weather[0].description}</p>
+            </div>
+        `;
+
+    } catch (err) {
+        console.error(err);
+        showError("Weather error ❌");
+    }
+};
 
 // ================= LIVE LOCATION =================
 window.getCurrentLocation = () => {
@@ -202,11 +245,9 @@ window.getCurrentLocation = () => {
             lng: pos.coords.longitude
         };
 
-        if (map && marker) {
-            map.setCenter(loc);
-            map.setZoom(15);
-            marker.setPosition(loc);
-        }
+        map.setCenter(loc);
+        map.setZoom(15);
+        marker.setPosition(loc);
 
     }, () => showError("Location denied ❌"));
 
@@ -230,14 +271,13 @@ window.toggleMusic = () => {
 window.toggleTheme = () => {
     document.body.classList.toggle("light-mode");
 
-    if (document.body.classList.contains("light-mode")) {
-        localStorage.setItem("theme", "light");
-    } else {
-        localStorage.setItem("theme", "dark");
-    }
+    localStorage.setItem(
+        "theme",
+        document.body.classList.contains("light-mode") ? "light" : "dark"
+    );
 };
 
-// ================= LOAD THEME =================
+// ================= LOAD =================
 window.onload = () => {
     if (localStorage.getItem("theme") === "light") {
         document.body.classList.add("light-mode");
@@ -254,15 +294,8 @@ function showError(msg) {
 
 // ================= AUTH STATE =================
 auth.onAuthStateChanged(user => {
-    const authBox = document.getElementById("auth-box");
-    const appBox = document.getElementById("app");
+    document.getElementById("auth-box").style.display = user ? "none" : "block";
+    document.getElementById("app").style.display = user ? "block" : "none";
 
-    if (user) {
-        authBox.style.display = "none";
-        appBox.style.display = "block";
-        displayTrips();
-    } else {
-        authBox.style.display = "block";
-        appBox.style.display = "none";
-    }
+    if (user) displayTrips();
 });
