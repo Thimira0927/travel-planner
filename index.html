@@ -19,16 +19,16 @@
 
 <body>
 
-<!-- VIDEO -->
+<!-- 🎬 VIDEO -->
 <video autoplay muted loop id="bg-video">
-  <source src="https://www.w3schools.com/howto/rain.mp4">
+  <source src="https://www.w3schools.com/howto/rain.mp4" type="video/mp4">
 </video>
 
 <div class="container">
 
 <h1>🌍 Travel Planner</h1>
 
-<!-- LOGIN -->
+<!-- 🔐 LOGIN -->
 <div id="auth-box">
   <input id="email" type="email" placeholder="Email"><br><br>
   <input id="password" type="password" placeholder="Password"><br><br>
@@ -36,11 +36,11 @@
   <button onclick="signup()">Signup</button>
 </div>
 
-<!-- APP -->
+<!-- 🌍 APP -->
 <div id="app" style="display:none;">
 
 <div class="search-box">
-  <input id="start" placeholder="Start">
+  <input id="start" placeholder="Start location">
   <input id="destination" placeholder="Destination">
   <input id="days" type="number" placeholder="Days">
   <input id="startDate" type="date">
@@ -58,6 +58,7 @@
   <button onclick="getSuggestion()">🤖 AI Plan</button>
   <button onclick="getCurrentLocation()">📍 My Location</button>
 
+  <!-- NEW FEATURES -->
   <button onclick="findPlaces('hotel')">🏨 Hotels</button>
   <button onclick="findPlaces('restaurant')">🍔 Food</button>
   <button onclick="calculateCost()">💰 Cost</button>
@@ -85,285 +86,39 @@
 </div>
 </div>
 
-<!-- MUSIC -->
+<!-- 🎵 MUSIC -->
 <audio id="bg-music" loop>
 <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">
 </audio>
 
-<!-- FIREBASE -->
+<!-- 🔥 FIREBASE CONFIG -->
 <script>
 const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_KEY",
+  apiKey: "AIzaSyB_DNA69gwDLbHIUqYxMqC5h85uiqYzrfs",
   authDomain: "travel---planner.firebaseapp.com",
   projectId: "travel---planner"
 };
 
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
 
+// ✅ GLOBAL (IMPORTANT)
+window.auth = firebase.auth();
+window.db = firebase.firestore();
+
+// AUTO LOGIN SWITCH
 auth.onAuthStateChanged(user => {
   document.getElementById("auth-box").style.display = user ? "none" : "block";
   document.getElementById("app").style.display = user ? "block" : "none";
 });
 </script>
 
-<!-- GOOGLE MAP -->
+<!-- 🌍 GOOGLE MAP -->
 <script async defer
-src="https://maps.googleapis.com/maps/api/js?key=YOUR_MAP_API_KEY&libraries=places&callback=initMap">
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnXXGPeMIhQ1KvzgeBOoEF6FMk1ph46lA&libraries=places&callback=initMap">
 </script>
 
-<!-- ================= JS ================= -->
-<script>
-
-const WEATHER_API = "YOUR_WEATHER_KEY";
-const GEMINI_API = "YOUR_GEMINI_KEY";
-
-let map, marker, directionsService, directionsRenderer;
-let placeMarkers = [];
-
-// ================= MAP =================
-function initMap() {
-  const loc = { lat: 7.8731, lng: 80.7718 };
-
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: loc,
-    zoom: 7
-  });
-
-  marker = new google.maps.Marker({ position: loc, map });
-
-  directionsService = new google.maps.DirectionsService();
-  directionsRenderer = new google.maps.DirectionsRenderer();
-  directionsRenderer.setMap(map);
-
-  new google.maps.places.Autocomplete(document.getElementById("start"));
-  new google.maps.places.Autocomplete(document.getElementById("destination"));
-}
-
-// ================= AUTH =================
-function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  auth.signInWithEmailAndPassword(email, password)
-    .catch(e => showError(e.message));
-}
-
-function signup() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  auth.createUserWithEmailAndPassword(email, password)
-    .catch(e => showError(e.message));
-}
-
-function logout() {
-  auth.signOut();
-}
-
-// ================= PLAN =================
-function planTrip() {
-  const dest = document.getElementById("destination").value;
-  const days = document.getElementById("days").value;
-
-  if (!dest || !days) return showError("Enter details!");
-
-  document.getElementById("result").innerHTML += `
-  <div class="card">
-    <div class="gallery">
-      <img src="https://source.unsplash.com/400x200/?${dest},travel">
-      <img src="https://source.unsplash.com/400x200/?${dest},city">
-      <img src="https://source.unsplash.com/400x200/?${dest},landmark">
-    </div>
-
-    <h3>${dest}</h3>
-    <p>⏳ ${days} days</p>
-
-    <button onclick="showLocation('${dest}')">📍 Map</button>
-  </div>
-  `;
-
-  loadWeather(dest);
-}
-
-// ================= WEATHER =================
-async function loadWeather(city) {
-  try {
-    let res = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${WEATHER_API}`
-    );
-
-    let data = await res.json();
-    if (!data.main) return;
-
-    document.getElementById("weatherBox").innerHTML = `
-      <div class="card">
-        <h3>🌦️ ${city}</h3>
-        <p>🌡️ ${data.main.temp}°C</p>
-        <p>☁️ ${data.weather[0].main}</p>
-      </div>
-    `;
-  } catch {
-    showError("Weather error ❌");
-  }
-}
-
-// ================= ROUTE =================
-function showRoute() {
-  const start = document.getElementById("start").value;
-  const dest = document.getElementById("destination").value;
-
-  if (!start || !dest) return showError("Enter start & destination!");
-
-  directionsService.route({
-    origin: start,
-    destination: dest,
-    travelMode: "DRIVING"
-  }, (res, status) => {
-    if (status === "OK") directionsRenderer.setDirections(res);
-    else showError("Route not found ❌");
-  });
-}
-
-// ================= PLACES =================
-function findPlaces(type) {
-  placeMarkers.forEach(m => m.setMap(null));
-  placeMarkers = [];
-
-  const service = new google.maps.places.PlacesService(map);
-
-  service.nearbySearch({
-    location: map.getCenter(),
-    radius: 3000,
-    type: [type]
-  }, (results, status) => {
-
-    if (status !== "OK") return showError("Places not found");
-
-    results.forEach(place => {
-      const m = new google.maps.Marker({
-        map,
-        position: place.geometry.location,
-        title: place.name
-      });
-      placeMarkers.push(m);
-    });
-  });
-}
-
-// ================= COST =================
-function calculateCost() {
-  const days = document.getElementById("days").value;
-  const budget = document.getElementById("budget").value;
-
-  if (!days || !budget) return showError("Enter budget!");
-
-  document.getElementById("costResult").innerText =
-    "💰 Estimated Cost: $" + (days * budget);
-}
-
-// ================= LOCATION =================
-function getCurrentLocation() {
-  if (!navigator.geolocation) return showError("Not supported");
-
-  navigator.geolocation.getCurrentPosition(pos => {
-    const loc = {
-      lat: pos.coords.latitude,
-      lng: pos.coords.longitude
-    };
-
-    map.setCenter(loc);
-    marker.setPosition(loc);
-  });
-}
-
-// ================= MAP LOCATION =================
-async function showLocation(city) {
-  try {
-    let res = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${WEATHER_API}`
-    );
-
-    let data = await res.json();
-    if (!data.coord) return;
-
-    let pos = { lat: data.coord.lat, lng: data.coord.lon };
-
-    map.setCenter(pos);
-    map.setZoom(12);
-    marker.setPosition(pos);
-  } catch {
-    showError("Map error");
-  }
-}
-
-// ================= AI =================
-async function getSuggestion() {
-  const box = document.getElementById("aiResult");
-
-  const dest = document.getElementById("destination").value;
-  const days = document.getElementById("days").value;
-
-  if (!dest || !days) return showError("Enter destination & days!");
-
-  box.style.display = "block";
-  box.innerHTML = "🤖 Planning...";
-
-  try {
-    let res = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API}`,
-      {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({
-          contents:[{
-            parts:[{
-              text:`Create a ${days}-day travel plan for ${dest}`
-            }]
-          }]
-        })
-      }
-    );
-
-    let data = await res.json();
-    let text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    box.innerHTML = text
-      ? text.replace(/\n/g,"<br>")
-      : "No result";
-
-  } catch {
-    box.innerHTML = "AI error ❌";
-  }
-}
-
-// ================= OTHER =================
-function toggleTheme() {
-  document.body.classList.toggle("light-mode");
-}
-
-function toggleMusic() {
-  const m = document.getElementById("bg-music");
-  m.paused ? m.play() : m.pause();
-}
-
-function downloadPDF() {
-  html2pdf().from(document.body).save("travel.pdf");
-}
-
-function clearTrips() {
-  document.getElementById("result").innerHTML = "";
-}
-
-// ERROR
-function showError(msg) {
-  const error = document.getElementById("error");
-  error.innerText = msg;
-  setTimeout(() => error.innerText = "", 3000);
-}
-
-</script>
+<!-- 🚀 MAIN SCRIPT -->
+<script src="script.js"></script>
 
 </body>
 </html>
