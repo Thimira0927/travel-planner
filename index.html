@@ -32,8 +32,10 @@
 <div id="auth-box">
   <input id="email" type="email" placeholder="Email"><br><br>
   <input id="password" type="password" placeholder="Password"><br><br>
-  <button onclick="login()">Login</button>
-  <button onclick="signup()">Signup</button>
+
+  <!-- 🔥 FIX: type="button" -->
+  <button type="button" onclick="login()">Login</button>
+  <button type="button" onclick="signup()">Signup</button>
 </div>
 
 <!-- 🌍 APP -->
@@ -48,22 +50,21 @@
 </div>
 
 <div class="top-buttons">
-  <button onclick="planTrip()">Plan</button>
-  <button onclick="clearTrips()">Clear</button>
-  <button onclick="toggleTheme()">Theme</button>
-  <button onclick="toggleMusic()">Music</button>
-  <button onclick="downloadPDF()">PDF</button>
+  <button type="button" onclick="planTrip()">Plan</button>
+  <button type="button" onclick="clearTrips()">Clear</button>
+  <button type="button" onclick="toggleTheme()">Theme</button>
+  <button type="button" onclick="toggleMusic()">Music</button>
+  <button type="button" onclick="downloadPDF()">PDF</button>
 
-  <button onclick="showRoute()">🧭 Route</button>
-  <button onclick="getSuggestion()">🤖 AI Plan</button>
-  <button onclick="getCurrentLocation()">📍 My Location</button>
+  <button type="button" onclick="showRoute()">🧭 Route</button>
+  <button type="button" onclick="getSuggestion()">🤖 AI Plan</button>
+  <button type="button" onclick="getCurrentLocation()">📍 My Location</button>
 
-  <!-- NEW FEATURES -->
-  <button onclick="findPlaces('hotel')">🏨 Hotels</button>
-  <button onclick="findPlaces('restaurant')">🍔 Food</button>
-  <button onclick="calculateCost()">💰 Cost</button>
+  <button type="button" onclick="findPlaces('hotel')">🏨 Hotels</button>
+  <button type="button" onclick="findPlaces('restaurant')">🍔 Food</button>
+  <button type="button" onclick="calculateCost()">💰 Cost</button>
 
-  <button onclick="logout()">Logout</button>
+  <button type="button" onclick="logout()">Logout</button>
 </div>
 
 <p id="error"></p>
@@ -71,16 +72,10 @@
 
 <div id="result"></div>
 
-<!-- WEATHER -->
 <div id="weatherBox"></div>
-
-<!-- AI -->
 <div id="aiResult"></div>
-
-<!-- COST -->
 <p id="costResult"></p>
 
-<!-- MAP -->
 <div id="map"></div>
 
 </div>
@@ -101,12 +96,12 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-// ✅ GLOBAL (IMPORTANT)
+// ✅ IMPORTANT GLOBAL
 window.auth = firebase.auth();
 window.db = firebase.firestore();
 
-// AUTO LOGIN SWITCH
-auth.onAuthStateChanged(user => {
+// 🔥 FIX: use window.auth
+window.auth.onAuthStateChanged(user => {
   document.getElementById("auth-box").style.display = user ? "none" : "block";
   document.getElementById("app").style.display = user ? "block" : "none";
 });
