@@ -119,7 +119,6 @@ async function displayTrips() {
 
             resultDiv.innerHTML += `
             <div class="card">
-
                 <div class="gallery">
                     <img src="https://source.unsplash.com/400x200/?${t.destination}&sig=1">
                     <img src="https://source.unsplash.com/400x200/?${t.destination},travel&sig=2">
@@ -135,7 +134,6 @@ async function displayTrips() {
                 <button onclick="findPlaces('hotel')">🏨 Hotels</button>
                 <button onclick="findPlaces('restaurant')">🍔 Food</button>
                 <button onclick="deleteTrip('${doc.id}')">❌ Delete</button>
-
             </div>`;
         });
 
@@ -160,15 +158,12 @@ window.showRoute = () => {
     const dest = document.getElementById("destination").value;
 
     if (!start || !dest) return showError("Enter start & destination!");
-
     drawRoute(start, dest);
 };
 
 window.showRouteTo = (dest) => {
     const start = document.getElementById("start").value;
-
     if (!start) return showError("Enter start location!");
-
     drawRoute(start, dest);
 };
 
@@ -188,35 +183,6 @@ function drawRoute(startLoc, destLoc) {
     });
 }
 
-// ================= PLACES =================
-window.findPlaces = (type) => {
-    if (!map) return;
-
-    placeMarkers.forEach(m => m.setMap(null));
-    placeMarkers = [];
-
-    const service = new google.maps.places.PlacesService(map);
-
-    service.nearbySearch({
-        location: map.getCenter(),
-        radius: 2000,
-        type: [type]
-    }, (results, status) => {
-
-        if (status !== "OK") return showError("No places found ❌");
-
-        results.forEach(place => {
-            const m = new google.maps.Marker({
-                map,
-                position: place.geometry.location,
-                title: place.name
-            });
-
-            placeMarkers.push(m);
-        });
-    });
-};
-
 // ================= LIVE LOCATION =================
 window.getCurrentLocation = () => {
     if (!navigator.geolocation) return showError("Not supported");
@@ -233,98 +199,15 @@ window.getCurrentLocation = () => {
             lng: pos.coords.longitude
         };
 
-        map.setCenter(loc);
-        map.setZoom(15);
-        marker.setPosition(loc);
+        if (map && marker) {
+            map.setCenter(loc);
+            map.setZoom(15);
+            marker.setPosition(loc);
+        }
 
     }, () => showError("Location denied ❌"));
 
     showError("Tracking started 📍");
-};
-
-// ================= WEATHER =================
-window.showLocation = async (city) => {
-    try {
-        const res = await fetch(
-            `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${WEATHER_API}`
-        );
-
-        const data = await res.json();
-
-        if (!data.coord) return showError("Location not found!");
-
-        const pos = {
-            lat: data.coord.lat,
-            lng: data.coord.lon
-        };
-
-        map.setCenter(pos);
-        map.setZoom(12);
-        marker.setPosition(pos);
-
-        document.getElementById("weatherBox").innerHTML = `
-            <div class="card">
-                <h3>🌦️ ${city}</h3>
-                <p>🌡️ ${data.main.temp}°C</p>
-                <p>☁️ ${data.weather[0].description}</p>
-            </div>
-        `;
-
-    } catch {
-        showError("Weather error ❌");
-    }
-};
-
-// ================= AI =================
-window.getSuggestion = async () => {
-    const box = document.getElementById("aiResult");
-
-    const dest = document.getElementById("destination").value;
-    const days = document.getElementById("days").value;
-
-    if (!dest || !days) return showError("Enter destination & days!");
-
-    box.style.display = "block";
-    box.innerHTML = "🤖 Planning...";
-
-    try {
-        const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API}`,
-            {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: `Create a ${days}-day travel plan for ${dest}`
-                        }]
-                    }]
-                })
-            }
-        );
-
-        const data = await res.json();
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        box.innerHTML = text ? text.replace(/\n/g, "<br>") : "No AI result";
-
-    } catch {
-        box.innerHTML = "AI error ❌";
-    }
-};
-
-// ================= COST =================
-window.calculateCost = () => {
-    const days = Number(document.getElementById("days").value);
-    const budget = Number(document.getElementById("budget").value);
-
-    if (!days || !budget) return showError("Enter budget & days!");
-
-    const total = days * budget;
-
-    document.getElementById("aiResult").innerHTML = `
-        <h3>💰 Total Cost: $${total}</h3>
-    `;
 };
 
 // ================= MUSIC =================
@@ -332,7 +215,7 @@ window.toggleMusic = () => {
     const music = document.getElementById("bg-music");
 
     if (!musicPlaying) {
-        music.play();
+        music.play().catch(() => showError("Click again to play music 🎵"));
         musicPlaying = true;
     } else {
         music.pause();
@@ -340,24 +223,24 @@ window.toggleMusic = () => {
     }
 };
 
-// ================= DARK MODE =================
+// ================= DARK MODE FIX =================
 window.toggleTheme = () => {
-    document.body.classList.toggle("dark");
+    document.body.classList.toggle("light-mode");
 
-    if (document.body.classList.contains("dark")) {
-        localStorage.setItem("theme", "dark");
-    } else {
+    if (document.body.classList.contains("light-mode")) {
         localStorage.setItem("theme", "light");
+    } else {
+        localStorage.setItem("theme", "dark");
     }
 };
 
-// ================= PDF =================
-window.downloadPDF = () =>
-    html2pdf().from(document.body).save("travel-plan.pdf");
+// ================= LOAD THEME =================
+window.onload = () => {
+    const saved = localStorage.getItem("theme");
 
-// ================= CLEAR =================
-window.clearTrips = () => {
-    document.getElementById("result").innerHTML = "";
+    if (saved === "light") {
+        document.body.classList.add("light-mode");
+    }
 };
 
 // ================= ERROR =================
@@ -382,10 +265,3 @@ auth.onAuthStateChanged(user => {
         appBox.style.display = "none";
     }
 });
-
-// ================= LOAD THEME =================
-window.onload = () => {
-    if (localStorage.getItem("theme") === "dark") {
-        document.body.classList.add("dark");
-    }
-};
