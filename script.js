@@ -2,7 +2,7 @@
 const WEATHER_API = "0c2d1ffade57eaa1ad12b6c3eb3f5f82";
 const GEMINI_API = "AIzaSyAQzfVBDL8wEIJ9i4pxTPqdU0Hfu9zZ0E4";
 
-// Firebase (IMPORTANT FIX)
+// ================= FIREBASE =================
 const auth = firebase.auth();
 const db = firebase.firestore();
 
@@ -47,7 +47,6 @@ window.login = () => {
     auth.signInWithEmailAndPassword(email, password)
         .then(() => {
             showError("Login success ✅");
-            displayTrips();
         })
         .catch(e => showError(e.message));
 };
@@ -89,7 +88,8 @@ window.planTrip = async () => {
         showError("Trip added ✅");
         displayTrips();
 
-    } catch {
+    } catch (err) {
+        console.error(err);
         showError("Save failed ❌");
     }
 };
@@ -133,15 +133,15 @@ async function displayTrips() {
 
                 <button onclick="showLocation('${t.destination}')">📍 Map</button>
                 <button onclick="showRouteTo('${t.destination}')">🧭 Route</button>
-
                 <button onclick="findPlaces('hotel')">🏨 Hotels</button>
                 <button onclick="findPlaces('restaurant')">🍔 Food</button>
-
                 <button onclick="deleteTrip('${doc.id}')">❌ Delete</button>
+
             </div>`;
         });
 
-    } catch {
+    } catch (err) {
+        console.error(err);
         showError("Load failed ❌");
     }
 }
@@ -312,13 +312,24 @@ window.getSuggestion = async () => {
 // ================= COST =================
 window.calculateCost = () => {
     const days = Number(document.getElementById("days").value);
-    if (!days) return showError("Enter days!");
+    const budget = Number(document.getElementById("budget").value);
 
-    const total = days * 100;
+    if (!days || !budget) return showError("Enter budget & days!");
+
+    const total = days * budget;
 
     document.getElementById("aiResult").innerHTML = `
         <h3>💰 Total Cost: $${total}</h3>
     `;
+};
+
+// ================= PDF =================
+window.downloadPDF = () =>
+    html2pdf().from(document.body).save("travel-plan.pdf");
+
+// ================= CLEAR =================
+window.clearTrips = () => {
+    document.getElementById("result").innerHTML = "";
 };
 
 // ================= ERROR =================
