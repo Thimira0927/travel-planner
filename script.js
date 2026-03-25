@@ -335,11 +335,19 @@ window.clearTrips = () => {
 // ================= ERROR =================
 function showError(msg) {
     const e = document.getElementById("error");
+    if (!e) return;
     e.innerText = msg;
     setTimeout(() => e.innerText = "", 3000);
 }
 
 // ================= AUTO LOAD =================
 auth.onAuthStateChanged(user => {
-    if (user) displayTrips();
+    if (user) {
+        displayTrips();
+        document.getElementById("auth-box").style.display = "none";
+        document.getElementById("app").style.display = "block";
+    } else {
+        document.getElementById("auth-box").style.display = "block";
+        document.getElementById("app").style.display = "none";
+    }
 });
