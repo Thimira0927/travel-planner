@@ -24,10 +24,15 @@ window.initMap = function () {
         center: loc
     });
 
-    marker = new google.maps.Marker({ position: loc, map });
+    marker = new google.maps.Marker({
+        position: loc,
+        map: map
+    });
 
     directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer();
+    directionsRenderer = new google.maps.DirectionsRenderer({
+        suppressMarkers: false
+    });
     directionsRenderer.setMap(map);
 
     const startInput = document.getElementById("start");
@@ -128,8 +133,6 @@ async function displayTrips() {
 
                 <button onclick="showLocation('${t.destination}')">📍 Map</button>
                 <button onclick="showRouteTo('${t.destination}')">🧭 Route</button>
-                <button onclick="findPlaces('hotel')">🏨 Hotels</button>
-                <button onclick="findPlaces('restaurant')">🍔 Food</button>
                 <button onclick="deleteTrip('${doc.id}')">❌ Delete</button>
             </div>`;
         });
@@ -165,12 +168,15 @@ window.showRouteTo = (dest) => {
 };
 
 function drawRoute(startLoc, destLoc) {
-    if (!directionsService) return;
+    if (!directionsService || !directionsRenderer) return;
+
+    // 🔥 clear old route
+    directionsRenderer.setDirections({ routes: [] });
 
     directionsService.route({
         origin: startLoc,
         destination: destLoc,
-        travelMode: "DRIVING"
+        travelMode: google.maps.TravelMode.DRIVING
     }, (res, status) => {
         if (status === "OK") {
             directionsRenderer.setDirections(res);
