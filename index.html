@@ -58,7 +58,6 @@
   <button onclick="getSuggestion()">🤖 AI Plan</button>
   <button onclick="getCurrentLocation()">📍 My Location</button>
 
-  <!-- NEW -->
   <button onclick="findPlaces('hotel')">🏨 Hotels</button>
   <button onclick="findPlaces('restaurant')">🍔 Food</button>
   <button onclick="calculateCost()">💰 Cost</button>
@@ -114,14 +113,16 @@ auth.onAuthStateChanged(user => {
 src="https://maps.googleapis.com/maps/api/js?key=YOUR_MAP_API_KEY&libraries=places&callback=initMap">
 </script>
 
-<!-- SCRIPT -->
+<!-- ================= JS ================= -->
 <script>
+
 const WEATHER_API = "YOUR_WEATHER_KEY";
 const GEMINI_API = "YOUR_GEMINI_KEY";
 
-let map, marker, directionsService, directionsRenderer, placeMarkers = [];
+let map, marker, directionsService, directionsRenderer;
+let placeMarkers = [];
 
-// MAP
+// ================= MAP =================
 function initMap() {
   const loc = { lat: 7.8731, lng: 80.7718 };
 
@@ -140,14 +141,20 @@ function initMap() {
   new google.maps.places.Autocomplete(document.getElementById("destination"));
 }
 
-// AUTH
+// ================= AUTH =================
 function login() {
-  auth.signInWithEmailAndPassword(email.value, password.value)
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  auth.signInWithEmailAndPassword(email, password)
     .catch(e => showError(e.message));
 }
 
 function signup() {
-  auth.createUserWithEmailAndPassword(email.value, password.value)
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  auth.createUserWithEmailAndPassword(email, password)
     .catch(e => showError(e.message));
 }
 
@@ -155,9 +162,9 @@ function logout() {
   auth.signOut();
 }
 
-// PLAN
+// ================= PLAN =================
 function planTrip() {
-  const dest = destination.value;
+  const dest = document.getElementById("destination").value;
   const days = document.getElementById("days").value;
 
   if (!dest || !days) return showError("Enter details!");
@@ -170,7 +177,7 @@ function planTrip() {
       <img src="https://source.unsplash.com/400x200/?${dest},landmark">
     </div>
 
-    <h2>${dest}</h2>
+    <h3>${dest}</h3>
     <p>⏳ ${days} days</p>
 
     <button onclick="showLocation('${dest}')">📍 Map</button>
@@ -180,38 +187,46 @@ function planTrip() {
   loadWeather(dest);
 }
 
-// WEATHER
+// ================= WEATHER =================
 async function loadWeather(city) {
-  const box = document.getElementById("weatherBox");
+  try {
+    let res = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${WEATHER_API}`
+    );
 
-  let res = await fetch(
-    `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${WEATHER_API}`
-  );
+    let data = await res.json();
+    if (!data.main) return;
 
-  let data = await res.json();
-  if (!data.main) return;
-
-  box.innerHTML = `
-    <div class="card">
-      <h3>🌦️ ${city}</h3>
-      <p>🌡️ ${data.main.temp}°C</p>
-      <p>☁️ ${data.weather[0].main}</p>
-    </div>
-  `;
+    document.getElementById("weatherBox").innerHTML = `
+      <div class="card">
+        <h3>🌦️ ${city}</h3>
+        <p>🌡️ ${data.main.temp}°C</p>
+        <p>☁️ ${data.weather[0].main}</p>
+      </div>
+    `;
+  } catch {
+    showError("Weather error ❌");
+  }
 }
 
-// ROUTE
+// ================= ROUTE =================
 function showRoute() {
+  const start = document.getElementById("start").value;
+  const dest = document.getElementById("destination").value;
+
+  if (!start || !dest) return showError("Enter start & destination!");
+
   directionsService.route({
-    origin: start.value,
-    destination: destination.value,
+    origin: start,
+    destination: dest,
     travelMode: "DRIVING"
   }, (res, status) => {
     if (status === "OK") directionsRenderer.setDirections(res);
+    else showError("Route not found ❌");
   });
 }
 
-// HOTELS / RESTAURANTS
+// ================= PLACES =================
 function findPlaces(type) {
   placeMarkers.forEach(m => m.setMap(null));
   placeMarkers = [];
@@ -223,10 +238,11 @@ function findPlaces(type) {
     radius: 3000,
     type: [type]
   }, (results, status) => {
-    if (status !== "OK") return;
+
+    if (status !== "OK") return showError("Places not found");
 
     results.forEach(place => {
-      let m = new google.maps.Marker({
+      const m = new google.maps.Marker({
         map,
         position: place.geometry.location,
         title: place.name
@@ -236,67 +252,93 @@ function findPlaces(type) {
   });
 }
 
-// COST
+// ================= COST =================
 function calculateCost() {
   const days = document.getElementById("days").value;
   const budget = document.getElementById("budget").value;
 
-  if (!days || !budget) return showError("Enter budget");
+  if (!days || !budget) return showError("Enter budget!");
 
   document.getElementById("costResult").innerText =
-    "Estimated Cost: $" + (days * budget);
+    "💰 Estimated Cost: $" + (days * budget);
 }
 
-// LOCATION
+// ================= LOCATION =================
 function getCurrentLocation() {
+  if (!navigator.geolocation) return showError("Not supported");
+
   navigator.geolocation.getCurrentPosition(pos => {
-    let loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    const loc = {
+      lat: pos.coords.latitude,
+      lng: pos.coords.longitude
+    };
+
     map.setCenter(loc);
     marker.setPosition(loc);
   });
 }
 
-// MAP LOCATION
+// ================= MAP LOCATION =================
 async function showLocation(city) {
-  let res = await fetch(
-    `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${WEATHER_API}`
-  );
+  try {
+    let res = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${WEATHER_API}`
+    );
 
-  let data = await res.json();
-  if (!data.coord) return;
+    let data = await res.json();
+    if (!data.coord) return;
 
-  let pos = { lat: data.coord.lat, lng: data.coord.lon };
-  map.setCenter(pos);
-  map.setZoom(12);
-  marker.setPosition(pos);
+    let pos = { lat: data.coord.lat, lng: data.coord.lon };
+
+    map.setCenter(pos);
+    map.setZoom(12);
+    marker.setPosition(pos);
+  } catch {
+    showError("Map error");
+  }
 }
 
-// AI
+// ================= AI =================
 async function getSuggestion() {
   const box = document.getElementById("aiResult");
+
+  const dest = document.getElementById("destination").value;
+  const days = document.getElementById("days").value;
+
+  if (!dest || !days) return showError("Enter destination & days!");
+
   box.style.display = "block";
   box.innerHTML = "🤖 Planning...";
 
-  let res = await fetch(
-    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API}`,
-    {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({
-        contents:[{
-          parts:[{text:`Create a day-by-day travel plan for ${destination.value}`}]
-        }]
-      })
-    }
-  );
+  try {
+    let res = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API}`,
+      {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+          contents:[{
+            parts:[{
+              text:`Create a ${days}-day travel plan for ${dest}`
+            }]
+          }]
+        })
+      }
+    );
 
-  let data = await res.json();
-  let text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    let data = await res.json();
+    let text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-  box.innerHTML = text ? text.replace(/\n/g,"<br>") : "No result";
+    box.innerHTML = text
+      ? text.replace(/\n/g,"<br>")
+      : "No result";
+
+  } catch {
+    box.innerHTML = "AI error ❌";
+  }
 }
 
-// OTHER
+// ================= OTHER =================
 function toggleTheme() {
   document.body.classList.toggle("light-mode");
 }
@@ -314,10 +356,13 @@ function clearTrips() {
   document.getElementById("result").innerHTML = "";
 }
 
+// ERROR
 function showError(msg) {
+  const error = document.getElementById("error");
   error.innerText = msg;
   setTimeout(() => error.innerText = "", 3000);
 }
+
 </script>
 
 </body>
