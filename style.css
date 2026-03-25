@@ -21,10 +21,10 @@ body {
   text-align: center;
   padding: 40px;
   animation: fadePage 1s ease-in-out;
-  transition: background 0.4s, color 0.4s;
+  transition: all 0.4s ease;
 }
 
-/* 🎬 VIDEO */
+/* 🎬 VIDEO BACKGROUND */
 #bg-video {
   position: fixed;
   top: 0;
@@ -40,7 +40,7 @@ body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0,0,0,0.45);
   z-index: -1;
 }
 
@@ -59,7 +59,7 @@ h1 {
   -webkit-text-fill-color: transparent;
 }
 
-/* 🔐 LOGIN */
+/* 🔐 LOGIN BOX */
 #auth-box {
   background: rgba(0,0,0,0.6);
   backdrop-filter: blur(12px);
@@ -96,6 +96,7 @@ input {
 
   background: rgba(0,0,0,0.5);
   color: white;
+  transition: 0.3s;
 }
 
 input::placeholder {
@@ -103,6 +104,7 @@ input::placeholder {
 }
 
 input:focus {
+  background: rgba(0,0,0,0.7);
   box-shadow: 0 0 10px #00c6ff;
 }
 
@@ -119,12 +121,17 @@ button {
   background: linear-gradient(135deg, #00c6ff, #0072ff);
   color: white;
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.3s ease;
+  font-weight: 600;
 }
 
 button:hover {
-  transform: translateY(-3px);
+  transform: translateY(-3px) scale(1.05);
   box-shadow: 0 0 15px #00c6ff;
+}
+
+button:active {
+  transform: scale(0.95);
 }
 
 /* BUTTON GROUP */
@@ -133,13 +140,13 @@ button:hover {
   gap: 10px;
   justify-content: center;
   flex-wrap: wrap;
-  margin-top: 10px;
 }
 
 /* GALLERY */
 .gallery {
   display: flex;
   gap: 5px;
+  margin-bottom: 10px;
 }
 
 .gallery img {
@@ -147,6 +154,9 @@ button:hover {
   height: 100px;
   object-fit: cover;
   border-radius: 8px;
+
+  /* 🔥 FIX: broken images */
+  background: #111;
 }
 
 /* RESULT GRID */
@@ -165,6 +175,13 @@ button:hover {
 
   background: rgba(0,0,0,0.65);
   backdrop-filter: blur(10px);
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  transition: 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
 }
 
 .card h3 {
@@ -173,6 +190,7 @@ button:hover {
 
 .card p {
   color: #e2e8f0;
+  font-size: 14px;
 }
 
 /* CARD BUTTON */
@@ -186,6 +204,11 @@ button:hover {
   background: linear-gradient(135deg, #ef4444, #dc2626);
 }
 
+/* WEATHER */
+#weatherBox .card {
+  text-align: center;
+}
+
 /* AI BOX */
 #aiResult {
   display: none;
@@ -194,6 +217,7 @@ button:hover {
   border-radius: 20px;
 
   background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(10px);
 }
 
 /* MAP */
@@ -202,15 +226,20 @@ button:hover {
   width: 100%;
   margin-top: 40px;
   border-radius: 20px;
+  overflow: hidden;
+
+  /* 🔥 FIX: map cut issue */
+  border: 2px solid rgba(255,255,255,0.2);
 }
 
 /* ERROR */
 #error {
   margin-top: 10px;
   color: #f87171;
+  font-weight: bold;
 }
 
-/* 🌞 LIGHT MODE FIX */
+/* 🌞 LIGHT MODE (FIXED) */
 .light-mode {
   background: #f1f5f9;
   color: #111;
@@ -220,8 +249,12 @@ button:hover {
   background: rgba(255,255,255,0.3);
 }
 
+.light-mode .search-box {
+  background: rgba(0,0,0,0.05);
+}
+
 .light-mode .card {
-  background: white;
+  background: rgba(255,255,255,0.95);
   color: #111;
 }
 
@@ -235,7 +268,7 @@ button:hover {
   color: black;
 }
 
-/* 📱 MOBILE FIX (IMPORTANT) */
+/* 📱 MOBILE FIX */
 @media (max-width: 768px) {
 
   body {
