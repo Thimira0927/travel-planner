@@ -2,9 +2,9 @@
 const WEATHER_API = "0c2d1ffade57eaa1ad12b6c3eb3f5f82";
 const GEMINI_API = "AIzaSyAQzfVBDL8wEIJ9i4pxTPqdU0Hfu9zZ0E4";
 
-// Firebase
-const auth = window.auth;
-const db = window.db;
+// Firebase (IMPORTANT FIX)
+const auth = firebase.auth();
+const db = firebase.firestore();
 
 // ================= GLOBAL =================
 let map = null;
@@ -37,17 +37,28 @@ window.initMap = function () {
 
 // ================= AUTH =================
 window.login = () => {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if (!email || !password) {
+        return showError("Enter email & password!");
+    }
 
     auth.signInWithEmailAndPassword(email, password)
-        .then(displayTrips)
+        .then(() => {
+            showError("Login success ✅");
+            displayTrips();
+        })
         .catch(e => showError(e.message));
 };
 
 window.signup = () => {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if (!email || !password) {
+        return showError("Enter email & password!");
+    }
 
     auth.createUserWithEmailAndPassword(email, password)
         .then(() => showError("Signup success ✅"))
@@ -303,43 +314,11 @@ window.calculateCost = () => {
     const days = Number(document.getElementById("days").value);
     if (!days) return showError("Enter days!");
 
-    const hotel = 50 * days;
-    const food = 20 * days;
-    const transport = 30 * days;
+    const total = days * 100;
 
-    const total = hotel + food + transport;
-
-    const box = document.getElementById("aiResult");
-    box.style.display = "block";
-
-    box.innerHTML = `
-        <h3>💰 Cost Estimate</h3>
-        <p>🏨 Hotel: $${hotel}</p>
-        <p>🍔 Food: $${food}</p>
-        <p>🚗 Transport: $${transport}</p>
-        <hr>
-        <h3>Total: $${total}</h3>
+    document.getElementById("aiResult").innerHTML = `
+        <h3>💰 Total Cost: $${total}</h3>
     `;
-};
-
-// ================= PDF =================
-window.downloadPDF = () =>
-    html2pdf().from(document.body).save("travel-plan.pdf");
-
-// ================= CLEAR =================
-window.clearTrips = async () => {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    const snap = await db.collection("trips")
-        .where("userId", "==", user.uid)
-        .get();
-
-    const batch = db.batch();
-    snap.forEach(doc => batch.delete(doc.ref));
-
-    await batch.commit();
-    displayTrips();
 };
 
 // ================= ERROR =================
