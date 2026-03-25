@@ -86,19 +86,22 @@
 </audio>
 
 <!-- 🔥 FIREBASE CONFIG (FULL FIX) -->
+
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyB_DNA69gwDLbHIUqYxMqC5h85uiqYzrfs",
   authDomain: "travel---planner.firebaseapp.com",
   projectId: "travel---planner",
-  storageBucket: "travel---planner.appspot.com",
-  messagingSenderId: "123456789",   // ⚠️ replace from Firebase console
-  appId: "1:123456789:web:abcdef"   // ⚠️ replace from Firebase console
+  storageBucket: "travel---planner.firebasestorage.app",
+  messagingSenderId: "911315526853",
+  appId: "1:911315526853:web:b64bbf49870ef3e6e77cac",
+  measurementId: "G-M7EH14ZQ7B"
 };
 
+// ✅ CORRECT (compat version)
 firebase.initializeApp(firebaseConfig);
 
-// GLOBAL
+// GLOBAL VARIABLES
 window.auth = firebase.auth();
 window.db = firebase.firestore();
 
@@ -108,6 +111,7 @@ window.auth.onAuthStateChanged(user => {
   document.getElementById("app").style.display = user ? "block" : "none";
 });
 </script>
+
 
 <!-- 🌍 GOOGLE MAP -->
 <script async defer
