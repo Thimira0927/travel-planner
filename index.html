@@ -33,7 +33,6 @@
   <input id="email" type="email" placeholder="Email"><br><br>
   <input id="password" type="password" placeholder="Password"><br><br>
 
-  <!-- 🔥 FIX: type="button" -->
   <button type="button" onclick="login()">Login</button>
   <button type="button" onclick="signup()">Signup</button>
 </div>
@@ -83,24 +82,27 @@
 
 <!-- 🎵 MUSIC -->
 <audio id="bg-music" loop>
-<source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">
+  <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">
 </audio>
 
-<!-- 🔥 FIREBASE CONFIG -->
+<!-- 🔥 FIREBASE CONFIG (FULL FIX) -->
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyB_DNA69gwDLbHIUqYxMqC5h85uiqYzrfs",
   authDomain: "travel---planner.firebaseapp.com",
-  projectId: "travel---planner"
+  projectId: "travel---planner",
+  storageBucket: "travel---planner.appspot.com",
+  messagingSenderId: "123456789",   // ⚠️ replace from Firebase console
+  appId: "1:123456789:web:abcdef"   // ⚠️ replace from Firebase console
 };
 
 firebase.initializeApp(firebaseConfig);
 
-// ✅ IMPORTANT GLOBAL
+// GLOBAL
 window.auth = firebase.auth();
 window.db = firebase.firestore();
 
-// 🔥 FIX: use window.auth
+// AUTH UI SWITCH
 window.auth.onAuthStateChanged(user => {
   document.getElementById("auth-box").style.display = user ? "none" : "block";
   document.getElementById("app").style.display = user ? "block" : "none";
@@ -109,7 +111,8 @@ window.auth.onAuthStateChanged(user => {
 
 <!-- 🌍 GOOGLE MAP -->
 <script async defer
-src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnXXGPeMIhQ1KvzgeBOoEF6FMk1ph46lA&libraries=places&callback=initMap">
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnXXGPeMIhQ1KvzgeBOoEF6FMk1ph46lA&libraries=places&callback=initMap"
+onerror="alert('Map failed to load ❌')">
 </script>
 
 <!-- 🚀 MAIN SCRIPT -->
