@@ -22,10 +22,7 @@ window.initMap = function () {
         center: loc
     });
 
-    marker = new google.maps.Marker({
-        position: loc,
-        map: map
-    });
+    marker = new google.maps.Marker({ position: loc, map });
 
     directionsService = new google.maps.DirectionsService();
     directionsRenderer = new google.maps.DirectionsRenderer();
@@ -40,13 +37,19 @@ window.initMap = function () {
 
 // ================= AUTH =================
 window.login = () => {
-    auth.signInWithEmailAndPassword(email.value, password.value)
-        .then(() => displayTrips())
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    auth.signInWithEmailAndPassword(email, password)
+        .then(displayTrips)
         .catch(e => showError(e.message));
 };
 
 window.signup = () => {
-    auth.createUserWithEmailAndPassword(email.value, password.value)
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    auth.createUserWithEmailAndPassword(email, password)
         .then(() => showError("Signup success ✅"))
         .catch(e => showError(e.message));
 };
@@ -55,24 +58,29 @@ window.logout = () => auth.signOut();
 
 // ================= PLAN TRIP =================
 window.planTrip = async () => {
-    const dest = destination.value.trim();
-    const days = daysInput.value;
-    const startDate = startDateInput.value;
+    const dest = document.getElementById("destination").value.trim();
+    const days = document.getElementById("days").value;
+    const startDate = document.getElementById("startDate").value;
 
     if (!dest || !days) return showError("Enter destination & days!");
 
     const user = auth.currentUser;
     if (!user) return showError("Login first!");
 
-    await db.collection("trips").add({
-        userId: user.uid,
-        destination: dest,
-        days: Number(days),
-        startDate
-    });
+    try {
+        await db.collection("trips").add({
+            userId: user.uid,
+            destination: dest,
+            days: Number(days),
+            startDate
+        });
 
-    showError("Trip added ✅");
-    displayTrips();
+        showError("Trip added ✅");
+        displayTrips();
+
+    } catch {
+        showError("Save failed ❌");
+    }
 };
 
 // ================= DISPLAY =================
@@ -83,43 +91,48 @@ async function displayTrips() {
     const resultDiv = document.getElementById("result");
     const countDiv = document.getElementById("tripCount");
 
-    const snap = await db.collection("trips")
-        .where("userId", "==", user.uid)
-        .get();
+    try {
+        const snap = await db.collection("trips")
+            .where("userId", "==", user.uid)
+            .get();
 
-    resultDiv.innerHTML = "";
-    countDiv.innerText = "Trips: " + snap.size;
+        resultDiv.innerHTML = "";
+        countDiv.innerText = "Trips: " + snap.size;
 
-    if (snap.empty) {
-        resultDiv.innerHTML = "<p>No trips yet 😢</p>";
-        return;
+        if (snap.empty) {
+            resultDiv.innerHTML = "<p>No trips yet 😢</p>";
+            return;
+        }
+
+        snap.forEach(doc => {
+            const t = doc.data();
+
+            resultDiv.innerHTML += `
+            <div class="card">
+
+                <div class="gallery">
+                    <img src="https://source.unsplash.com/400x200/?${t.destination}">
+                    <img src="https://source.unsplash.com/400x200/?${t.destination},travel">
+                    <img src="https://source.unsplash.com/400x200/?${t.destination},city">
+                </div>
+
+                <h3>${t.destination}</h3>
+                <p>📅 ${t.startDate || "Not set"}</p>
+                <p>⏳ ${t.days} days</p>
+
+                <button onclick="showLocation('${t.destination}')">📍 Map</button>
+                <button onclick="showRouteTo('${t.destination}')">🧭 Route</button>
+
+                <button onclick="findPlaces('hotel')">🏨 Hotels</button>
+                <button onclick="findPlaces('restaurant')">🍔 Food</button>
+
+                <button onclick="deleteTrip('${doc.id}')">❌ Delete</button>
+            </div>`;
+        });
+
+    } catch {
+        showError("Load failed ❌");
     }
-
-    snap.forEach(doc => {
-        const t = doc.data();
-
-        resultDiv.innerHTML += `
-        <div class="card">
-
-            <div class="gallery">
-                <img src="https://source.unsplash.com/400x200/?${t.destination}">
-                <img src="https://source.unsplash.com/400x200/?${t.destination},travel">
-                <img src="https://source.unsplash.com/400x200/?${t.destination},city">
-            </div>
-
-            <h3>${t.destination}</h3>
-            <p>📅 ${t.startDate || "Not set"}</p>
-            <p>⏳ ${t.days} days</p>
-
-            <button onclick="showLocation('${t.destination}')">📍 Map</button>
-            <button onclick="showRouteTo('${t.destination}')">🧭 Route</button>
-
-            <button onclick="findPlaces('hotel')">🏨 Hotels</button>
-            <button onclick="findPlaces('restaurant')">🍔 Food</button>
-
-            <button onclick="deleteTrip('${doc.id}')">❌ Delete</button>
-        </div>`;
-    });
 }
 
 // ================= DELETE =================
@@ -133,19 +146,25 @@ window.deleteTrip = id => {
 
 // ================= ROUTE =================
 window.showRoute = () => {
-    if (!start.value || !destination.value)
-        return showError("Enter start & destination!");
+    const start = document.getElementById("start").value;
+    const dest = document.getElementById("destination").value;
 
-    drawRoute(start.value, destination.value);
+    if (!start || !dest) return showError("Enter start & destination!");
+
+    drawRoute(start, dest);
 };
 
 window.showRouteTo = (dest) => {
-    if (!start.value) return showError("Enter start location!");
+    const start = document.getElementById("start").value;
 
-    drawRoute(start.value, dest);
+    if (!start) return showError("Enter start location!");
+
+    drawRoute(start, dest);
 };
 
 function drawRoute(startLoc, destLoc) {
+    if (!directionsService) return;
+
     directionsService.route({
         origin: startLoc,
         destination: destLoc,
@@ -193,6 +212,8 @@ window.findPlaces = (type) => {
 
 // ================= LOCATION =================
 window.getCurrentLocation = () => {
+    if (!navigator.geolocation) return showError("Not supported");
+
     navigator.geolocation.getCurrentPosition(pos => {
         const loc = {
             lat: pos.coords.latitude,
@@ -208,72 +229,84 @@ window.getCurrentLocation = () => {
 
 // ================= WEATHER =================
 window.showLocation = async (city) => {
-    const res = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${WEATHER_API}`
-    );
+    try {
+        const res = await fetch(
+            `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${WEATHER_API}`
+        );
 
-    const data = await res.json();
+        const data = await res.json();
 
-    if (!data.coord) return showError("Location not found!");
+        if (!data.coord) return showError("Location not found!");
 
-    const pos = {
-        lat: data.coord.lat,
-        lng: data.coord.lon
-    };
+        const pos = {
+            lat: data.coord.lat,
+            lng: data.coord.lon
+        };
 
-    map.setCenter(pos);
-    map.setZoom(12);
-    marker.setPosition(pos);
+        map.setCenter(pos);
+        map.setZoom(12);
+        marker.setPosition(pos);
 
-    const box = document.getElementById("weatherBox");
-    box.innerHTML = `
-        <div class="card">
-            <h3>🌦️ ${city}</h3>
-            <p>🌡️ ${data.main.temp}°C</p>
-            <p>☁️ ${data.weather[0].description}</p>
-        </div>
-    `;
+        document.getElementById("weatherBox").innerHTML = `
+            <div class="card">
+                <h3>🌦️ ${city}</h3>
+                <p>🌡️ ${data.main.temp}°C</p>
+                <p>☁️ ${data.weather[0].description}</p>
+            </div>
+        `;
+
+    } catch {
+        showError("Weather error ❌");
+    }
 };
 
 // ================= AI =================
 window.getSuggestion = async () => {
     const box = document.getElementById("aiResult");
 
-    if (!destination.value || !daysInput.value)
-        return showError("Enter destination & days!");
+    const dest = document.getElementById("destination").value;
+    const days = document.getElementById("days").value;
+
+    if (!dest || !days) return showError("Enter destination & days!");
 
     box.style.display = "block";
     box.innerHTML = "🤖 Planning...";
 
-    const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API}`,
-        {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: `Create a ${daysInput.value}-day travel plan for ${destination.value}`
+    try {
+        const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API}`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: `Create a ${days}-day travel plan for ${dest}`
+                        }]
                     }]
-                }]
-            })
-        }
-    );
+                })
+            }
+        );
 
-    const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        const data = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    box.innerHTML = text ? text.replace(/\n/g, "<br>") : "No AI result";
+        box.innerHTML = text ? text.replace(/\n/g, "<br>") : "No AI result";
+
+    } catch {
+        box.innerHTML = "AI error ❌";
+    }
 };
 
 // ================= COST =================
 window.calculateCost = () => {
-    const days = Number(daysInput.value);
+    const days = Number(document.getElementById("days").value);
     if (!days) return showError("Enter days!");
 
     const hotel = 50 * days;
     const food = 20 * days;
     const transport = 30 * days;
+
     const total = hotel + food + transport;
 
     const box = document.getElementById("aiResult");
@@ -304,15 +337,16 @@ window.clearTrips = async () => {
 
     const batch = db.batch();
     snap.forEach(doc => batch.delete(doc.ref));
-    await batch.commit();
 
+    await batch.commit();
     displayTrips();
 };
 
 // ================= ERROR =================
 function showError(msg) {
-    error.innerText = msg;
-    setTimeout(() => error.innerText = "", 3000);
+    const e = document.getElementById("error");
+    e.innerText = msg;
+    setTimeout(() => e.innerText = "", 3000);
 }
 
 // ================= AUTO LOAD =================
