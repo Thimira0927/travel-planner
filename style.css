@@ -136,6 +136,17 @@ button:hover {
 button:active {
   transform: scale(0.95);
 }
+.gallery {
+  display: flex;
+  gap: 5px;
+}
+
+.gallery img {
+  width: 33%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+}
 
 /* BUTTON GROUP */
 .top-buttons {
